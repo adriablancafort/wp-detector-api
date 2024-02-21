@@ -24,11 +24,47 @@ if ($type === 'wp') {
         echo json_encode(['wp' => 'no']);
     }
 } elseif ($type === 'themes') {
-    // Basic list of themes
-    $themes = ['theme1', 'theme2', 'theme3'];
+
+    $theme1 = [
+        'title' => 'Theme1',
+        'author' => 'Author1',
+        'description' => 'This is a description for theme1.'
+    ];
+    
+    $themes = [$theme1];
     echo json_encode(['themes' => $themes]);
+
 } elseif ($type === 'plugins') {
-    // Basic list of plugins
-    $plugins = ['plugin1', 'plugin2', 'plugin3'];
+    
+    $plugin1 = [
+        'title' => 'Plugin1',
+        'author' => 'Author1',
+        'description' => 'This is a description for Plugin1.'
+    ];
+
+    $plugins = [$plugin1];
     echo json_encode(['plugins' => $plugins]);
+
+} elseif ($type === 'top-themes') {
+
+    $theme1 = [
+        'title' => 'Theme1',
+        'author' => 'Author1',
+        'description' => 'This is a description for theme1.'
+    ];
+    
+    $themes = [$theme1];
+    echo json_encode(['themes' => $themes]);
+
+} elseif ($type === 'top-plugins') {
+    
+    $plugin1 = [
+        'title' => 'Plugin1',
+        'author' => 'Author1',
+        'description' => 'This is a description for Plugin1.'
+    ];
+
+    $plugins = [$plugin1];
+    echo json_encode(['plugins' => $plugins]);
+
 }
