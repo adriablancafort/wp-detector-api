@@ -1,5 +1,5 @@
 <?php
-function detect_plugins($html, $wpContent) {
+function find_plugins($html, $wpContent) {
     // Returns a list of all the plugins detected in the html content
 
     $plugin1 = [

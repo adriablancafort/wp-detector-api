@@ -1,5 +1,5 @@
 <?php
-function detect_themes($html, $wpContent) {
+function find_themes($html, $wpContent) {
     // Returns a list of all the themes detected in the html content
 
     $theme1 = [

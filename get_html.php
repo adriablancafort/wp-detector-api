@@ -1,3 +1,6 @@
+<?php
+
+$html = '';
 
 function get_html($url) {
 	$headers = array(
