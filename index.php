@@ -1,4 +1,7 @@
 <?php
+// Disable error reporting
+ini_set('display_errors', '0');
+
 require 'set_header.php';
 require 'get_wp.php';
 require 'get_themes.php';
