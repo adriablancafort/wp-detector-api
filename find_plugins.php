@@ -99,13 +99,18 @@ function get_plugin_banner($pluginSlug)
     ];
 
     foreach ($bannerUrls as $url) {
-        $headers = get_headers($url);
-        if ($headers && strpos($headers[0], '200') !== false) {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_NOBODY, true);
+        curl_exec($ch);
+        $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($statusCode == 200) {
             return $url;
         }
     }
 
-    return $baseUrl . 'banner-1544x500.png';
+    return '/no-plugin-banner.png';
 }
 
 // Returns the icon URL of the plugin
@@ -113,7 +118,7 @@ function get_plugin_icon($pluginSlug)
 {
     $baseUrl = 'https://ps.w.org/' . $pluginSlug . '/assets/';
 
-    $bannerUrls = [
+    $iconUrls = [
         $baseUrl . 'icon.svg',
         $baseUrl . 'icon-128x128.png',
         $baseUrl . 'icon-128x128.gif',
@@ -121,9 +126,14 @@ function get_plugin_icon($pluginSlug)
         $baseUrl . 'icon-256x256.gif',
     ];
 
-    foreach ($bannerUrls as $url) {
-        $headers = get_headers($url);
-        if ($headers && strpos($headers[0], '200') !== false) {
+    foreach ($iconUrls as $url) {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_NOBODY, true);
+        curl_exec($ch);
+        $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($statusCode == 200) {
             return $url;
         }
     }

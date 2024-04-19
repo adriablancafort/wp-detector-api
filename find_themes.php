@@ -94,8 +94,13 @@ function get_theme_banner($themePath)
     ];
 
     foreach ($bannerUrls as $url) {
-        $headers = get_headers($url);
-        if ($headers && strpos($headers[0], '200') !== false) {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_NOBODY, true);
+        curl_exec($ch);
+        $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($statusCode == 200) {
             return $url;
         }
     }
