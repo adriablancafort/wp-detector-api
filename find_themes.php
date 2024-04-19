@@ -76,6 +76,7 @@ function themes_from_database($themeSlugs){
             'banner' => $retrievedData['banner']
         ];
         $themes[] = $newTheme;
+        $result = updateTimesAnalyzed('themes',$themeSlug);
     }
 }
 
@@ -116,6 +117,7 @@ function process_element($element, $wpContentPath, $themes) {
                                 'banner' => $retrievedData['banner'] ?? $themeImage
                             ];
                             $themes[] = $newTheme;
+                            $result = updateTimesAnalyzed('themes',$themeSlug);
                         }
                 } else {
                     $themeDetails = parse_theme_info($themePath);

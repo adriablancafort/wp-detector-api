@@ -92,6 +92,7 @@ function plugins_from_database($pluginSlugs){
             'link' => $retrievedData['link'],
         ];
         $plugins[] = $newPlugin;
+        $result = updateTimesAnalyzed('plugins',$pluginSlug);
     }
 }
 
@@ -130,6 +131,7 @@ function process_plugin($url, $wpContentPath, $plugins) {
                             'link' => $retrievedData['link'],
                         ];
                         $plugins[] = $newPlugin;
+                        $result = updateTimesAnalyzed('plugins',$pluginSlug);
                     }
                 } else {
                     $pluginDetails = parse_plugin_info($pluginPath);

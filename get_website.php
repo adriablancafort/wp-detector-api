@@ -1,6 +1,7 @@
 <?php
 
 require 'database_connection.php';
+require 'database_write.php';
 
 function get_website($url) {
     $conn = open_database_connection();
@@ -12,6 +13,9 @@ function get_website($url) {
         $wpContent = find_wp_content($html);
         $wp = $wpContent !== false;
         database_write_website($conn, $url, $wp);
+    }
+    else {
+        $result = updateTimesAnalyzed('websites',$url);
     }
     close_database_connection($conn);
     return $wp;
