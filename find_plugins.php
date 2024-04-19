@@ -105,7 +105,7 @@ function get_plugin_banner($pluginSlug)
         }
     }
 
-    return '/unknown-plugin-banner.webp';
+    return $baseUrl . 'banner-1544x500.png';
 }
 
 // Returns the icon URL of the plugin
@@ -128,6 +128,6 @@ function get_plugin_icon($pluginSlug)
         }
     }
 
-    return '/unknown-plugin-icon.webp';
+    return $baseUrl . 'icon.svg';
 }
 ?>
