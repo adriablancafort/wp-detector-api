@@ -8,10 +8,10 @@ function get_wp($url)
     //$conn = open_database_connection();
     //$wp = database_read_website($conn, $url);
     //if (!empty($wp)) {
-        require 'get_html.php';
+        require 'get_content.php';
         require 'find_links.php';
         require 'find_wp.php';
-        $html = get_html($url);
+        $html = get_content($url);
         $links = find_links($html);
         $wp = find_wp($links);
         //database_write_website($conn, $url, $wp);

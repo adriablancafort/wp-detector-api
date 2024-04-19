@@ -30,8 +30,9 @@ function find_themes($links)
 // Returns the theme information given a theme path
 function find_theme_info($themePath)
 {
-    $styleCssUrl =  $themePath . '/style.css';
-    $styleCssContent = @file_get_contents($styleCssUrl);
+    require_once 'get_content.php';
+    $styleCssUrl =  $pluginPath . '/readme.txt';
+    $styleCssContent = get_content($styleCssUrl);
 
     preg_match('/Theme Name: (.*)/', $styleCssContent, $matches);
     $title = $matches[1] ?? '';

@@ -30,8 +30,9 @@ function find_plugins($links)
 // Returns the plugin information given a plugin path
 function find_plugin_info($pluginSlug, $pluginPath)
 {
+    require_once 'get_content.php';
     $readmeTxtUrl =  $pluginPath . '/readme.txt';
-    $readmeTxtContent = @file_get_contents($readmeTxtUrl);
+    $readmeTxtContent = get_content($readmeTxtUrl);
 
     preg_match('/=== (.*) ===/', $readmeTxtContent, $matches);
     // Convert "plugin-slug" to "Plugin Slug"

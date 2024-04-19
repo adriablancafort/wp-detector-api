@@ -8,10 +8,10 @@ function get_plugins($url)
     //$conn = open_database_connection();
     //$plugins = database_read_plugins($conn, $url);
     //if (!empty($plugins)) {
-        require 'get_html.php';
+        require 'get_content.php';
         require 'find_links.php';
         require 'find_plugins.php';
-        $html = get_html($url);
+        $html = get_content($url);
         $links = find_links($html);
         $plugins = find_plugins($links);
     //database_write_plugins($conn, $url, $plugins);

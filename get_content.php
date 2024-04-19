@@ -1,7 +1,7 @@
 <?php
 
-// Returns the html content of a given url
-function get_html($url) 
+// Returns the content content of a given url
+function get_content($url) 
 {
 	$headers = array(
 	   "Connection: keep-alive",
@@ -30,7 +30,7 @@ function get_html($url)
 	curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFilePath);
 	curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFilePath);
 	curl_setopt($ch, CURLOPT_URL,$url);
-	$html=curl_exec($ch);
+	$content=curl_exec($ch);
 	
 	// Check for cURL errors
 	if (curl_errno($ch)) {
@@ -41,6 +41,6 @@ function get_html($url)
 
 	curl_close($ch);
 	
-	return $html;
+	return $content;
 }
 ?>
