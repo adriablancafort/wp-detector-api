@@ -15,7 +15,7 @@ function find_themes($links)
             $themePath = $rootDomain . '/wp-content/themes/' . $themeSlug;
 
             if (!array_key_exists($themeSlug, $themes)) {
-                $themeInfo = find_theme_info($themePath);
+                $themeInfo = find_theme_info($themeSlug, $themePath);
                 $themes[$themeSlug] = $themeInfo;
             }
         }
@@ -28,14 +28,20 @@ function find_themes($links)
 }
 
 // Returns the theme information given a theme path
-function find_theme_info($themePath)
+function find_theme_info($themeSlug, $themePath)
 {
     require_once 'get_content.php';
     $styleCssUrl =  $themePath . '/style.css';
     $styleCssContent = get_content($styleCssUrl);
 
     preg_match('/Theme Name: (.*)/', $styleCssContent, $matches);
-    $title = $matches[1] ?? null;
+    if (!isset($matches[1])) {
+        // Convert "plugin-slug" to "Plugin Slug"
+        $words = explode('-', $themeSlug);
+        $words = array_map('ucfirst', $words);
+        $themeTitle = implode(' ', $words);
+    }
+    $title = $matches[1] ?? $themeTitle;
 
     preg_match('/Theme URI: (.*)/', $styleCssContent, $matches);
     $website = $matches[1] ?? null;
