@@ -70,7 +70,7 @@ function find_plugin_info($pluginSlug, $pluginPath)
         'banner' => $banner,
         'icon' => $icon,
         'title' => $title,
-        'author' => $author,
+        'contributors' => $author,
         'version' => $version,
         'website' => $website,
         'sanatizedWebsite' => $sanatizedWebsite,
