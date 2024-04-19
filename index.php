@@ -2,10 +2,10 @@
 // Disable error reporting
 ini_set('display_errors', '0');
 
-require 'set_header.php';
-require 'get_wp.php';
-require 'get_themes.php';
-require 'get_plugins.php';
+require_once 'set_header.php';
+require_once 'get_wp.php';
+require_once 'get_themes.php';
+require_once 'get_plugins.php';
 
 $url = $_GET['url'];
 $type = $_GET['type'];

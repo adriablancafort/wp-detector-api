@@ -1,6 +1,6 @@
 <?php
 
-require 'database_connection.php';
+require_once 'database_connection.php';
 
 // Returns if wordpress is detected given a url
 function get_wp($url) 
@@ -8,9 +8,9 @@ function get_wp($url)
     //$conn = open_database_connection();
     //$wp = database_read_website($conn, $url);
     //if (!empty($wp)) {
-        require 'get_content.php';
-        require 'find_links.php';
-        require 'find_wp.php';
+        require_once 'get_content.php';
+        require_once 'find_links.php';
+        require_once 'find_wp.php';
         $html = get_content($url);
         $links = find_links($html);
         $wp = find_wp($links);

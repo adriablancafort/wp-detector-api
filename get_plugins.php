@@ -1,6 +1,6 @@
 <?php
 
-// require 'open_database_connection.php';
+// require_once 'open_database_connection.php';
 
 // Returns the plugins of a given url
 function get_plugins($url)
@@ -8,9 +8,9 @@ function get_plugins($url)
     //$conn = open_database_connection();
     //$plugins = database_read_plugins($conn, $url);
     //if (!empty($plugins)) {
-        require 'get_content.php';
-        require 'find_links.php';
-        require 'find_plugins.php';
+        require_once 'get_content.php';
+        require_once 'find_links.php';
+        require_once 'find_plugins.php';
         $html = get_content($url);
         $links = find_links($html);
         $plugins = find_plugins($links);

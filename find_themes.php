@@ -38,7 +38,7 @@ function find_theme_info($themePath)
     $title = $matches[1] ?? '';
 
     preg_match('/Theme URI: (.*)/', $styleCssContent, $matches);
-    $website = $matches[1] ?? 'No website specified';
+    $website = $matches[1] ?? 'No specified';
 
     $sanatizedWebsite = str_replace(['http://', 'https://'], '', $website);
 
@@ -49,13 +49,13 @@ function find_theme_info($themePath)
     $version = $matches[1] ?? '';
 
     preg_match('/Requires at least: (.*)/', $styleCssContent, $matches);
-    $reqWpVersion = $matches[1] . ' or higher' ?? 'Not specified';
+    $reqWpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : 'Not specified';
 
     preg_match('/Tested up to: (.*)/', $styleCssContent, $matches);
     $testedWpVersion = $matches[1] ?? 'Not specified';
 
     preg_match('/Requires PHP: (.*)/', $styleCssContent, $matches);
-    $reqPhpVersion = $matches[1] . ' or higher' ?? 'Not specified';
+    $reqPhpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : 'Not specified';
 
     preg_match('/Description: (.*)Version:/', $styleCssContent, $matches);
     $description = trim($matches[1] ?? 'Not available');
@@ -77,7 +77,6 @@ function find_theme_info($themePath)
     ];
 
     return $theme;
-
 }
 
 // Returns the banner URL of the theme

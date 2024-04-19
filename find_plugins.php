@@ -53,13 +53,13 @@ function find_plugin_info($pluginSlug, $pluginPath)
     $sanatizedWebsite = str_replace(['http://', 'https://'], '', $website);
 
     preg_match('/Requires at least: (.*)/', $readmeTxtContent, $matches);
-    $reqWpVersion = $matches[1] . ' or higher' ?? '';
+    $reqWpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : 'Not specified';
 
     preg_match('/Tested up to: (.*)/', $readmeTxtContent, $matches);
     $testedWpVersion = $matches[1] ?? '';
 
     preg_match('/Requires PHP: (.*)/', $readmeTxtContent, $matches);
-    $reqPhpVersion = $matches[1] . ' or higher' ?? '';
+    $reqPhpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : 'Not specified';
 
     preg_match('/== Description ==\n\n(.*)/', $readmeTxtContent, $matches);
     $description = $matches[1] ?? '';
@@ -78,7 +78,7 @@ function find_plugin_info($pluginSlug, $pluginPath)
         'reqWpVersion' => $reqWpVersion,
         'testedWpVersion' => $testedWpVersion,
         'reqPhpVersion' => $reqPhpVersion,
-        'description' => $description,
+        'description' => $readmeTxtContent,
     ];
 
     return $plugin;
