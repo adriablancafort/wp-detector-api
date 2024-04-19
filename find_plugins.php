@@ -33,7 +33,7 @@ function find_plugin_info($pluginSlug, $pluginPath)
     require_once 'get_content.php';
     $readmeTxtUrl =  $pluginPath . '/readme.txt';
     $readmeTxtContent = get_content($readmeTxtUrl);
-
+    
     preg_match('/=== (.*) ===/', $readmeTxtContent, $matches);
     // Convert "plugin-slug" to "Plugin Slug"
     $words = explode('-', $pluginSlug);
@@ -78,7 +78,7 @@ function find_plugin_info($pluginSlug, $pluginPath)
         'reqWpVersion' => $reqWpVersion,
         'testedWpVersion' => $testedWpVersion,
         'reqPhpVersion' => $reqPhpVersion,
-        'description' => $readmeTxtContent,
+        'description' => $description,
     ];
 
     return $plugin;

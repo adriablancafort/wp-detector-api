@@ -31,7 +31,7 @@ function find_themes($links)
 function find_theme_info($themePath)
 {
     require_once 'get_content.php';
-    $styleCssUrl =  $pluginPath . '/readme.txt';
+    $styleCssUrl =  $themePath . '/style.css';
     $styleCssContent = get_content($styleCssUrl);
 
     preg_match('/Theme Name: (.*)/', $styleCssContent, $matches);
@@ -72,7 +72,7 @@ function find_theme_info($themePath)
         'reqWpVersion' => $reqWpVersion,
         'testedWpVersion' => $testedWpVersion,
         'reqPhpVersion' => $reqPhpVersion,
-        'description' => $styleCssContent,
+        'description' => $description,
         // No 'link' since it won't be afiliate
     ];
 
