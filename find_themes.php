@@ -66,12 +66,12 @@ function find_theme_info($themePath)
         'title' => $title,
         'author' => $author,
         'version' => $version,
-        'website' => $styleCssUrl,
+        'website' => $website,
         'sanatizedWebsite' => $sanatizedWebsite,
         'reqWpVersion' => $reqWpVersion,
         'testedWpVersion' => $testedWpVersion,
         'reqPhpVersion' => $reqPhpVersion,
-        'description' => $description,
+        'description' => $styleCssContent,
         // No 'link' since it won't be afiliate
     ];
 
