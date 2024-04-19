@@ -105,6 +105,6 @@ function get_theme_banner($themePath)
         }
     }
 
-    return '/unknown-theme-banner.webp';
+    return '/no-theme-banner.png';
 }
 ?>

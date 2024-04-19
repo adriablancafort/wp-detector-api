@@ -138,6 +138,6 @@ function get_plugin_icon($pluginSlug)
         }
     }
 
-    return $baseUrl . 'icon.svg';
+    return '/no-plugin-icon.png';
 }
 ?>
