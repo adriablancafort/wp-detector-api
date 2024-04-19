@@ -2,8 +2,10 @@
 require 'database_read.php';
 require 'find_version.php';
 require 'find_theme_banner.php';
+require 'database_connection.php';
+require 'database_write.php';
 
-function find_themes($html, $wpContent) {
+function find_themes($html, $wpContent, $url) {
     // Returns a list of all the themes detected in the html content
 
     // $theme1 = [
@@ -22,22 +24,59 @@ function find_themes($html, $wpContent) {
 
     // return [$theme1];
 
-    $dom = new DOMDocument();
-	libxml_use_internal_errors(true);
-    $dom->loadHTML($html); 
-    $themes = [];
+    if($url===null) {
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($html); 
+        $themes = [];
 
-    $elements = array_merge(
-        iterator_to_array($dom->getElementsByTagName('link')),
-        iterator_to_array($dom->getElementsByTagName('script')),
-        iterator_to_array($dom->getElementsByTagName('meta'))
-    );
+        $elements = array_merge(
+            iterator_to_array($dom->getElementsByTagName('link')),
+            iterator_to_array($dom->getElementsByTagName('script')),
+            iterator_to_array($dom->getElementsByTagName('meta'))
+        );
 
-    foreach ($elements as $element) {
-        $themes = process_element($element, $wpContentPath, $themes);
+        foreach ($elements as $element) {
+
+            $themes = process_element($element, $wpContent, $themes);
+        }
+    }
+    else {
+        $conn = open_database_connection();
+        $stmt = $conn->prepare("SELECT wp FROM websites WHERE url = ?");
+        $stmt->bind_param("s", $url);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $slugs = $row['themes'];
+        }
+        $slugs = str_replace(' ', '', $slugs);
+        $themeSlugs = explode(',', $slugs);
+        $themes = themes_from_database($themeSlugs);
     }
 
     return $themes;
+}
+
+function themes_from_database($themeSlugs){
+    foreach ($themeSlugs as $themeSlug) {
+        $retrievedData = getDataBySlug('themes', $themeSlug);
+        $newTheme = [
+            'author' => $retrievedData['author'],
+            'link' => $retrievedData['link'],
+            'website' => $retrievedData['website'],
+            'sanatizedWebsite' => $retrievedData['sanatizedWebsite'],
+            'description' => $retrievedData['description'],
+            'title' => $retrievedData['title'],
+            'reqWpVersion' => $retrievedData['reqWpVersion'],
+            'testedWpVersion' => $retrievedData['testedWpVersion'],
+            'reqPhpVersion' => $retrievedData['reqPhpVersion'],
+            'version' => $retrievedData['version'],
+            'banner' => $retrievedData['banner']
+        ];
+        $themes[] = $newTheme;
+    }
 }
 
 function process_element($element, $wpContentPath, $themes) {
@@ -55,9 +94,9 @@ function process_element($element, $wpContentPath, $themes) {
             if (!in_array($themeSlug, $themes)) {
                 $themePath = $wpContentPath . 'themes/' . $themeSlug . '/style.css';
                 
-                if (slugExists('theme', $themeSlug)) {
+                if (slugExists('themes', $themeSlug)) {
                         
-                        $retrievedData = getDataBySlug('theme', $themeSlug);
+                        $retrievedData = getDataBySlug('themes', $themeSlug);
                         if ($retrievedData !== null) {
                             if($retrievedData['banner'] === null) {
                                 $themeImage = find_theme_banner($wpContentPath . 'themes/' . $themeSlug, $themeSlug);
@@ -72,7 +111,8 @@ function process_element($element, $wpContentPath, $themes) {
                                 'reqWpVersion' => $retrievedData['reqWpVersion'],
                                 'testedWpVersion' => $retrievedData['testedWpVersion'],
                                 'reqPhpVersion' => $retrievedData['reqPhpVersion'],
-                                'version' => find_version($themePath, 'theme'),
+                                //'version' => find_version($pluginPath, 'plugin'),
+                                'version' => $retrievedData['version'],
                                 'banner' => $retrievedData['banner'] ?? $themeImage
                             ];
                             $themes[] = $newTheme;
@@ -87,21 +127,23 @@ function process_element($element, $wpContentPath, $themes) {
                     $website .= isset($parsed_url['host']) ? $parsed_url['host'] : '';
 
                     $newTheme = [
-                        'author' => $themeDetails['author'],
+                        'author' => $themeDetails['author'] ?? null,
                         'link' => $link,
                         'website' => $website,
                         'sanatizedWebsite' => $sanatizedWebsite,
-                        'description' => $themeDetails['description'],
-                        'title' => $themeDetails['title'],
-                        'reqWpVersion' => $themeDetails['reqWpVersion'],
-                        'testedWpVersion' => $themeDetails['testedWpVersion'],
-                        'reqPhpVersion' => $themeDetails['reqPhpVersion'],
-                        'version' => $themeDetails['version'],
+                        'description' => $themeDetails['description'] ?? null,
+                        'title' => $themeDetails['title'] ?? null,
+                        'reqWpVersion' => $themeDetails['reqWpVersion'] ?? null,
+                        'testedWpVersion' => $themeDetails['testedWpVersion'] ?? null,
+                        'reqPhpVersion' => $themeDetails['reqPhpVersion'] ?? null,
+                        'version' => $themeDetails['version'] ?? null,
                         'banner' => $themeImage
                     ];
                     $themes[] = $newTheme;
 
-                    // TO DO: write the theme to db except version + slug + times_analyzed
+                    $newTheme['slug'] = $themeSlug;
+                    $newTheme['times_analyzed'] = 1;
+                    $result = setDataBySlug('themes', $newTheme);
                 }
             }
         }

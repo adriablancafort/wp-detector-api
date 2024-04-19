@@ -1,14 +1,12 @@
 <?php
 require 'database_connection.php';
 
-function slugExists($table, $slug) {
+function slugExists($table_name, $slug) {
 
     $conn = open_database_connection();
 
-    $table_name = $table . 's';
-    $slug_name = $table . 'Slug';
     if (!$conn->connect_error) {
-        $query = "SELECT COUNT(*) FROM $table_name WHERE $slug_name = ?";
+        $query = "SELECT COUNT(*) FROM $table_name WHERE slug = ?";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("s", $slug);
         $stmt->execute();
@@ -26,12 +24,10 @@ function slugExists($table, $slug) {
     }
 }
 
-function getDataBySlug($table, $slug) {
+function getDataBySlug($table_name, $slug) {
 	
     $conn = open_database_connection();
 
-    $table_name = $table . 's';
-    $slug_name = $table . 'Slug';
     // Check the connection
     if (!$conn->connect_error) {
 		// Define columns based on the table value
@@ -50,7 +46,8 @@ function getDataBySlug($table, $slug) {
                 'reqWpVersion',
                 'testedWpVersion',
                 'reqPhpVersion',
-                'times_analyzed'
+                'times_analyzed',
+                'version'
             ];
         } elseif ($table === 'theme') {
             $columns = [
@@ -65,11 +62,12 @@ function getDataBySlug($table, $slug) {
                 'reqWpVersion',
                 'testedWpVersion',
                 'reqPhpVersion',
-                'times_analyzed'
+                'times_analyzed',
+                'version'
             ];
         }
         $columnNames = implode(',', $columns);
-        $query = "SELECT $columnNames FROM $table_name WHERE $slug_name = ?";
+        $query = "SELECT $columnNames FROM $table_name WHERE slug = ?";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("s", $slug);
         $stmt->execute();
