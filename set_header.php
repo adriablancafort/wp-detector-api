@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
 
-$allowed_origins = ['http://localhost:4321', 'https://wp-detector.com', 'https://wp-detector.pages.dev'];
+$allowed_origins = ['http://localhost:4321', 'https://wp-detector.com'];
 
 // Check if the Origin header is in the list of allowed origins
 if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowed_origins)) {

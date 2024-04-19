@@ -1,6 +1,8 @@
 <?php
 
-function open_database_connection() {
+// Open a connection to the database
+function open_database_connection() 
+{
     $servername = "localhost";
     $username = "id21953222_wpdetector";
     $password = "W3B3%i2@";
@@ -15,7 +17,9 @@ function open_database_connection() {
     return $conn;
 }
 
-function close_database_connection($conn) {
+// Close the connection to the database
+function close_database_connection($conn) 
+{
     if ($conn) {
         $conn->close();
     }

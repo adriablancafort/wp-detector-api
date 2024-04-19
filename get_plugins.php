@@ -1,16 +1,34 @@
 <?php
-require 'find_plugins.php';
 
-function get_plugins($url) {
+// require 'open_database_connection.php';
 
-    //if ($wpContent === null) {
+// Returns the plugins of a given url
+function get_plugins($url)
+{
+    //$conn = open_database_connection();
+    //$plugins = database_read_plugins($conn, $url);
+    //if (!empty($plugins)) {
         require 'get_html.php';
-        require 'find_wp_content.php';
+        require 'find_links.php';
+        require 'find_plugins.php';
         $html = get_html($url);
-        $wpContent = find_wp_content($html);
+        $links = find_links($html);
+        $plugins = find_plugins($links);
+    //database_write_plugins($conn, $url, $plugins);
     //}
-
-    $plugins = find_plugins($html, $wpContent);
+    //close_database_connection($conn);
     return $plugins;
+}
+
+// Reads the plugins of a given url in the database
+function database_read_plugins($conn, $url)
+{
+    return null;
+}
+
+// Writes the plugins of a given url in the database
+function database_write_plugins($conn, $url, $wp)
+{
+    return null;
 }
 ?>

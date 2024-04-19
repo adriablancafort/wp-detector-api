@@ -1,166 +1,99 @@
 <?php
-require 'database_read.php';
-require 'find_version.php';
-require 'find_theme_banner.php';
 
-function find_themes($html, $wpContent) {
-    // Returns a list of all the themes detected in the html content
-
-    // $theme1 = [
-    //     'banner' => 'https://generatepress.com/wp-content/themes/generatepress/screenshot.png',
-    //     'title' => 'GeneratePress',
-    //     'author' => 'Tom Usborne',
-    //     'version' => '3.4.0',
-    //     'website' => 'https://generatepress.com',
-    //     'sanatizedWebsite' => 'generatepress.com',
-    //     'reqWpVersion' => '5.2',
-    //     'testedWpVersion' => '6.3',
-    //     'reqPhpVersion' => '5.6',
-    //     'description' => 'GeneratePress is a lightweight WordPress theme built with a focus on speed and usability. Performance is important to us, which is why a fresh GeneratePress install adds less than 10kb (gzipped) to your page size. We take full advantage of the block editor (Gutenberg), which gives you more control over creating your content. If you use page builders, GeneratePress is the right theme for you. It is completely compatible with all major page builders, including Beaver Builder and Elementor. Thanks to our emphasis on WordPress coding standards, we can boast full compatibility with all well-coded plugins, including WooCommerce. GeneratePress is fully responsive, uses valid HTML/CSS, and is translated into over 25 languages by our amazing community of users. A few of our many features include 60+ color controls, powerful dynamic typography, 5 navigation locations, 5 sidebar layouts, dropdown menus (click or hover), and 9 widget areas. Learn more and check out our powerful premium version at generatepress.com',
-    //     'link' => 'https://generatepress.com/?utm_source=wp-detector',
-    // ];
-
-    // return [$theme1];
-
-    $dom = new DOMDocument();
-	libxml_use_internal_errors(true);
-    $dom->loadHTML($html); 
+// Returns all the themes of the given url
+function find_themes($links)
+{
     $themes = [];
 
-    $elements = array_merge(
-        iterator_to_array($dom->getElementsByTagName('link')),
-        iterator_to_array($dom->getElementsByTagName('script')),
-        iterator_to_array($dom->getElementsByTagName('meta'))
-    );
-
-    foreach ($elements as $element) {
-        $themes = process_element($element, $wpContentPath, $themes);
-    }
-
-    return $themes;
-}
-
-function process_element($element, $wpContentPath, $themes) {
-    $href = $element->getAttribute('href');
-    $src = $element->getAttribute('src');
-    $content = $element->getAttribute('content');
-    $matches = [];
-
-    if (strpos($href, '/wp-content/themes/') !== false || strpos($src, '/wp-content/themes/') !== false || strpos($content, '/wp-content/themes/') !== false) {
-        $pattern = '/\/wp-content\/themes\/(.*?)\//';
-
-        if (preg_match($pattern, $href, $matches) || preg_match($pattern, $src, $matches) || preg_match($pattern, $content, $matches)) {
+    foreach ($links as $link) {
+        if (preg_match('/.*\/themes\/([^\/]*)/', $link, $matches)) {
             $themeSlug = $matches[1];
 
-            if (!in_array($themeSlug, $themes)) {
-                $themePath = $wpContentPath . 'themes/' . $themeSlug . '/style.css';
-                
-                if (slugExists('theme', $themeSlug)) {
-                        
-                        $retrievedData = getDataBySlug('theme', $themeSlug);
-                        if ($retrievedData !== null) {
-                            if($retrievedData['banner'] === null) {
-                                $themeImage = find_theme_banner($wpContentPath . 'themes/' . $themeSlug, $themeSlug);
-                            }
-                            $newTheme = [
-                                'author' => $retrievedData['author'],
-                                'link' => $retrievedData['link'],
-                                'website' => $retrievedData['website'],
-                                'sanatizedWebsite' => $retrievedData['sanatizedWebsite'],
-                                'description' => $retrievedData['description'],
-                                'title' => $retrievedData['title'],
-                                'reqWpVersion' => $retrievedData['reqWpVersion'],
-                                'testedWpVersion' => $retrievedData['testedWpVersion'],
-                                'reqPhpVersion' => $retrievedData['reqPhpVersion'],
-                                'version' => find_version($themePath, 'theme'),
-                                'banner' => $retrievedData['banner'] ?? $themeImage
-                            ];
-                            $themes[] = $newTheme;
-                        }
-                } else {
-                    $themeDetails = parse_theme_info($themePath);
-                    $themeImage = find_theme_banner($wpContentPath . 'themes/' . $themeSlug, $themeSlug);
-                    $link = $themeDetails['link'];
-                    $parsed_url = parse_url($link);
-                    $sanatizedWebsite = isset($parsed_url['host']) ? $parsed_url['host'] : '';
-                    $website = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
-                    $website .= isset($parsed_url['host']) ? $parsed_url['host'] : '';
+            // Parse the URL to get the scheme and host
+            $parsedUrl = parse_url($link);
+            $rootDomain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
+            $themePath = $rootDomain . '/wp-content/themes/' . $themeSlug;
 
-                    $newTheme = [
-                        'author' => $themeDetails['author'],
-                        'link' => $link,
-                        'website' => $website,
-                        'sanatizedWebsite' => $sanatizedWebsite,
-                        'description' => $themeDetails['description'],
-                        'title' => $themeDetails['title'],
-                        'reqWpVersion' => $themeDetails['reqWpVersion'],
-                        'testedWpVersion' => $themeDetails['testedWpVersion'],
-                        'reqPhpVersion' => $themeDetails['reqPhpVersion'],
-                        'version' => $themeDetails['version'],
-                        'banner' => $themeImage
-                    ];
-                    $themes[] = $newTheme;
-
-                    // TO DO: write the theme to db except version + slug + times_analyzed
-                }
+            if (!array_key_exists($themeSlug, $themes)) {
+                $themeInfo = find_theme_info($themePath);
+                $themes[$themeSlug] = $themeInfo;
             }
         }
     }
 
+    // Convert the associative array to an indexed array
+    $themes = array_values($themes);
+
     return $themes;
 }
 
-function parse_theme_info($themePath) {
-    $styleContent = @file_get_contents($themePath);
-    $themeDetails = [];
-                
-    if($styleContent !== false && !empty($styleContent)) {
-		preg_match('/Theme Name:(.*)/i', $styleContent, $matches);
-        if (isset($matches[1])) {
-            $themeDetails['title'] = trim($matches[1]);
-        } else { $themeDetails['title'] = null; }
-        
-        preg_match('/Theme URI:(.*)/i', $styleContent, $matches);
-        if (isset($matches[1])) {
-            $themeDetails['link'] = trim($matches[1]);
-        } else { $themeDetails['link'] = null; }
+// Returns the theme information given a theme path
+function find_theme_info($themePath)
+{
+    $styleCssUrl =  $themePath . '/style.css';
+    $styleCssContent = @file_get_contents($styleCssUrl);
 
-        preg_match('/Author:(.*)/i', $styleContent, $matches);
-        if (isset($matches[1])) {
-            $themeDetails['author'] = trim($matches[1]);
-        } else { $themeDetails['author'] = null; }
+    preg_match('/Theme Name: (.*)/', $styleCssContent, $matches);
+    $title = $matches[1] ?? '';
 
-        preg_match('/Description:(.*)/i', $styleContent, $matches);
-        if (isset($matches[1])) {
-            $themeDetails['description'] = trim($matches[1]);
-        } else { $themeDetails['description'] = null; }
+    preg_match('/Theme URI: (.*)/', $styleCssContent, $matches);
+    $website = $matches[1] ?? 'No website specified';
 
-        preg_match('/Version:\s+([\d.]+\d)/', $styleContent, $matches);
-        if (isset($matches[1])) {
-            $themeDetails['version'] = trim($matches[1]);
-        } else { $themeDetails['version'] = null; }
-        
-        preg_match('/Requires at least:\s+([\d.]+\d)/', $styleContent, $matches);
-		if (isset($matches[1])) {
-			$themeDetails['reqWpVersion'] = trim($matches[1]);
-		} else {
-			$themeDetails['reqWpVersion'] = null;
-		}
+    $sanatizedWebsite = str_replace(['http://', 'https://'], '', $website);
 
-		preg_match('/Tested up to:\s+([\d.]+\d)/', $styleContent, $matches);
-		if (isset($matches[1])) {
-			$themeDetails['testedWpVersion'] = trim($matches[1]);
-		} else {
-			$themeDetails['testedWpVersion'] = null;
-		}
+    preg_match('/Author: (.*)/', $styleCssContent, $matches);
+    $author = $matches[1] ?? 'No author specified';
 
-		preg_match('/Requires PHP:\s+([\d.]+\d)/', $styleContent, $matches);
-		if (isset($matches[1])) {
-			$themeDetails['reqPhpVersion'] = trim($matches[1]);
-		} else {
-			$themeDetails['reqPhpVersion'] = null;
-		}
+    preg_match('/Version: (.*)/', $styleCssContent, $matches);
+    $version = $matches[1] ?? '';
+
+    preg_match('/Requires at least: (.*)/', $styleCssContent, $matches);
+    $reqWpVersion = $matches[1] . ' or higher' ?? 'Not specified';
+
+    preg_match('/Tested up to: (.*)/', $styleCssContent, $matches);
+    $testedWpVersion = $matches[1] ?? 'Not specified';
+
+    preg_match('/Requires PHP: (.*)/', $styleCssContent, $matches);
+    $reqPhpVersion = $matches[1] . ' or higher' ?? 'Not specified';
+
+    preg_match('/Description: (.*)Version:/', $styleCssContent, $matches);
+    $description = trim($matches[1] ?? 'Not available');
+
+    $banner = get_theme_banner($themePath);
+    
+    $theme = [
+        'banner' => $banner,
+        'title' => $title,
+        'author' => $author,
+        'version' => $version,
+        'website' => $styleCssUrl,
+        'sanatizedWebsite' => $sanatizedWebsite,
+        'reqWpVersion' => $reqWpVersion,
+        'testedWpVersion' => $testedWpVersion,
+        'reqPhpVersion' => $reqPhpVersion,
+        'description' => $description,
+        // No 'link' since it won't be afiliate
+    ];
+
+    return $theme;
+
+}
+
+// Returns the banner URL of the theme
+function get_theme_banner($themePath)
+{
+    $bannerUrls = [
+        $themePath . '/screenshot.png',
+        $themePath . '/screenshot.jpg'
+    ];
+
+    foreach ($bannerUrls as $url) {
+        $headers = @get_headers($url);
+        if ($headers && strpos($headers[0], '200') !== false) {
+            return $url;
+        }
     }
-    return $themeDetails;
+
+    return '/unknown-theme-banner.webp';
 }
 ?>

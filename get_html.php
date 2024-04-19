@@ -1,8 +1,8 @@
 <?php
 
-$html = '';
-
-function get_html($url) {
+// Returns the html content of a given url
+function get_html($url) 
+{
 	$headers = array(
 	   "Connection: keep-alive",
 	   "Upgrade-Insecure-Requests: 1",
@@ -10,7 +10,6 @@ function get_html($url) {
 	   "Accept-Language: en,es-ES;q=0.9,es;q=0.8",
 	);
 	
-	//$agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36';
 	$agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0';
 
 	$cookieFilePath = __DIR__ . '/cookie.txt';
@@ -31,18 +30,17 @@ function get_html($url) {
 	curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFilePath);
 	curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFilePath);
 	curl_setopt($ch, CURLOPT_URL,$url);
-	$result=curl_exec($ch);
+	$html=curl_exec($ch);
 	
 	// Check for cURL errors
-    if (curl_errno($ch)) {
-        $error_message = curl_error($ch);
-        error_log('cURL Error: ' . $error_message);
-        curl_close($ch);
-        return '';
-    }
+	if (curl_errno($ch)) {
+		$error_message = curl_error($ch);
+		curl_close($ch);
+		return '';
+	}
 
 	curl_close($ch);
-    
-	return $result;
+	
+	return $html;
 }
 ?>

@@ -1,6 +1,6 @@
 <?php
 require 'set_header.php';
-require 'get_website.php';
+require 'get_wp.php';
 require 'get_themes.php';
 require 'get_plugins.php';
 
@@ -8,7 +8,7 @@ $url = $_GET['url'];
 $type = $_GET['type'];
 
 if ($type === 'wp') {
-    $wp = get_website($url);    
+    $wp = get_wp($url);    
     echo json_encode(['wp' => $wp]);    
 
 } elseif ($type === 'themes') {
