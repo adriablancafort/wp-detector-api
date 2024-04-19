@@ -1,4 +1,7 @@
 <?php
+// Disable error reporting
+ini_set('display_errors', '0');
+
 header('Content-Type: application/json');
 
 $allowed_origins = ['http://localhost:4321', 'https://wp-detector.com'];
