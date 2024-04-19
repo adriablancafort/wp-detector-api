@@ -35,30 +35,30 @@ function find_theme_info($themePath)
     $styleCssContent = get_content($styleCssUrl);
 
     preg_match('/Theme Name: (.*)/', $styleCssContent, $matches);
-    $title = $matches[1] ?? '';
+    $title = $matches[1] ?? null;
 
     preg_match('/Theme URI: (.*)/', $styleCssContent, $matches);
-    $website = $matches[1] ?? 'No specified';
+    $website = $matches[1] ?? null;
 
     $sanatizedWebsite = str_replace(['http://', 'https://'], '', $website);
 
     preg_match('/Author: (.*)/', $styleCssContent, $matches);
-    $author = $matches[1] ?? 'No author specified';
+    $author = $matches[1] ?? null;
 
     preg_match('/Version: (.*)/', $styleCssContent, $matches);
-    $version = $matches[1] ?? '';
+    $version = $matches[1] ?? null;
 
     preg_match('/Requires at least: (.*)/', $styleCssContent, $matches);
-    $reqWpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : 'Not specified';
+    $reqWpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
 
     preg_match('/Tested up to: (.*)/', $styleCssContent, $matches);
-    $testedWpVersion = $matches[1] ?? 'Not specified';
+    $testedWpVersion = $matches[1] ?? null;
 
     preg_match('/Requires PHP: (.*)/', $styleCssContent, $matches);
-    $reqPhpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : 'Not specified';
+    $reqPhpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
 
     preg_match('/Description: (.*)Version:/', $styleCssContent, $matches);
-    $description = trim($matches[1] ?? 'Not available');
+    $description = trim($matches[1] ?? null);
 
     $banner = get_theme_banner($themePath);
     
@@ -88,7 +88,7 @@ function get_theme_banner($themePath)
     ];
 
     foreach ($bannerUrls as $url) {
-        $headers = @get_headers($url);
+        $headers = get_headers($url);
         if ($headers && strpos($headers[0], '200') !== false) {
             return $url;
         }
