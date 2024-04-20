@@ -5,6 +5,8 @@ function find_themes($links)
 {
     $themes = [];
 
+    //$conn = open_database_connection();
+
     foreach ($links as $link) {
         if (preg_match('/.*\/themes\/([^\/]*)/', $link, $matches)) {
             $themeSlug = $matches[1];
@@ -15,14 +17,17 @@ function find_themes($links)
             $themePath = $rootDomain . '/wp-content/themes/' . $themeSlug;
 
             if (!array_key_exists($themeSlug, $themes)) {
-                $themeInfo = find_theme_info($themeSlug, $themePath);
+                //$themeInfo = database_read_theme($conn, $themeSlug);
+                //if (empty($themeInfo)) {
+                    $themeInfo = find_theme_info($themeSlug, $themePath);
+                    //database_write_theme($conn, $themeSlug, $themeInfo);
+                //}
                 $themes[$themeSlug] = $themeInfo;
             }
         }
     }
 
-    // Convert the associative array to an indexed array
-    $themes = array_values($themes);
+    //close_database_connection($conn);
 
     return $themes;
 }
@@ -106,5 +111,17 @@ function get_theme_banner($themePath)
     }
 
     return '/no-theme-banner.png';
+}
+
+function database_read_theme($conn, $themeSlug)
+{
+    // Read themeInfo associated with a themeSlug in the themes table
+    return null;
+}
+
+function database_write_theme($conn, $themeSlug, $themeInfo)
+{
+    // Write themeInfo associated with a themeSlug in the themes table
+    return null;
 }
 ?>

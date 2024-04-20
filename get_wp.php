@@ -7,7 +7,7 @@ function get_wp($url)
 {
     //$conn = open_database_connection();
     //$wp = database_read_website($conn, $url);
-    //if (!empty($wp)) {
+    //if (empty($wp)) {
         require_once 'get_content.php';
         require_once 'find_links.php';
         require_once 'find_wp.php';
@@ -22,7 +22,7 @@ function get_wp($url)
 
 // Reads if wordpress is detected given url in the database
 function database_read_website($conn, $url) {
-    $stmt = $conn->prepare("SELECT wp FROM websites WHERE url = ?");
+    $stmt = $conn->prepare("SELECT wp FROM websites WHERE url = $url");
     $stmt->bind_param("s", $url);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -36,7 +36,7 @@ function database_read_website($conn, $url) {
 // Writes if wordpress is detected given url in the database
 function database_write_website($conn, $url, $wp) {
     $date = date('Y-m-d');
-    $stmt = $conn->prepare("INSERT INTO websites (url, wp, themes, plugins, times_analyzed, last_analyzed) VALUES (?, ?, NULL, NULL, 1, ?) ON DUPLICATE KEY UPDATE times_analyzed = times_analyzed + 1, last_analyzed = ?");
+    $stmt = $conn->prepare("INSERT INTO websites (url, wp, themes, plugins, times_analyzed, last_analyzed) VALUES (?, ?, NULL, NULL, 1, ?) ON DUPLICATE KEY UPDATE times_analyzed = times_analyzed + 1, last_analyzed = $date");
     $stmt->bind_param("ssss", $url, $wp, $date, $date);
     $stmt->execute();
 }

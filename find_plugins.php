@@ -5,6 +5,8 @@ function find_plugins($links)
 {
     $plugins = [];
 
+    //$conn = open_database_connection();
+
     foreach ($links as $link) {
         if (preg_match('/.*\/plugins\/([^\/]*)/', $link, $matches)) {
             $pluginSlug = $matches[1];
@@ -15,14 +17,17 @@ function find_plugins($links)
             $pluginPath = $rootDomain . '/wp-content/plugins/' . $pluginSlug;
 
             if (!array_key_exists($pluginSlug, $plugins)) {
-                $pluginInfo = find_plugin_info($pluginSlug, $pluginPath);
+                //$pluginInfo = database_read_plugin($conn, $pluginSlug);
+                //if (empty($pluginInfo)) {
+                    $pluginInfo = find_plugin_info($pluginSlug, $pluginPath);
+                    //database_write_plugin($conn, $pluginSlug, $pluginInfo);
+                //}
                 $plugins[$pluginSlug] = $pluginInfo;
             }
         }
     }
 
-    // Convert the associative array to an indexed array
-    $plugins = array_values($plugins);
+    //close_database_connection($conn);
 
     return $plugins;
 }
@@ -81,7 +86,10 @@ function find_plugin_info($pluginSlug, $pluginPath)
         'testedWpVersion' => $testedWpVersion,
         'reqPhpVersion' => $reqPhpVersion,
         'description' => $description,
+        // No 'link' since it won't be afiliate
     ];
+
+    // Write plugin to database
 
     return $plugin;
 }
@@ -139,5 +147,17 @@ function get_plugin_icon($pluginSlug)
     }
 
     return '/no-plugin-icon.png';
+}
+
+function database_read_plugin($conn, $pluginSlug)
+{
+    // Read pluginInfo associated with a pluginSlug in the plugins table
+    return null;
+}
+
+function database_write_plugin($conn, $pluginSlug, $pluginInfo)
+{
+    // Write pluginInfo associated with a pluginSlug in the plugins table
+    return null;
 }
 ?>
