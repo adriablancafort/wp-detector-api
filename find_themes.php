@@ -110,7 +110,7 @@ function get_theme_banner($themePath)
         }
     }
 
-    return '/no-theme-banner.png';
+    return '/no-theme-banner.svg';
 }
 
 function database_read_theme($conn, $themeSlug)

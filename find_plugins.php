@@ -118,7 +118,7 @@ function get_plugin_banner($pluginSlug)
         }
     }
 
-    return '/no-plugin-banner.png';
+    return '/no-plugin-banner.svg';
 }
 
 // Returns the icon URL of the plugin
@@ -146,7 +146,7 @@ function get_plugin_icon($pluginSlug)
         }
     }
 
-    return '/no-plugin-icon.png';
+    return '/no-plugin-icon.svg';
 }
 
 function database_read_plugin($conn, $pluginSlug)
