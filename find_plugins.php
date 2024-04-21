@@ -49,7 +49,7 @@ function find_plugin_info($pluginSlug, $pluginPath)
     $title = $matches[1] ?? $pluginTitle;
 
     preg_match('/Contributors: (.*)/', $readmeTxtContent, $matches);
-    $author = $matches[1] ?? null;
+    $author = $matches[1] ?? "No contributors found";
 
     preg_match('/Stable tag: (.*)/', $readmeTxtContent, $matches);
     $version = $matches[1] ?? null;
@@ -86,7 +86,7 @@ function find_plugin_info($pluginSlug, $pluginPath)
         'testedWpVersion' => $testedWpVersion,
         'reqPhpVersion' => $reqPhpVersion,
         'description' => $description,
-        // No 'link' since it won't be afiliate
+        'link' => null,
     ];
 
     // Write plugin to database

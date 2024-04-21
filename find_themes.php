@@ -54,7 +54,7 @@ function find_theme_info($themeSlug, $themePath)
     $sanatizedWebsite = str_replace(['http://', 'https://'], '', $website);
 
     preg_match('/Author: (.*)/', $styleCssContent, $matches);
-    $author = $matches[1] ?? null;
+    $author = $matches[1] ?? "No author found";
 
     preg_match('/Version: (.*)/', $styleCssContent, $matches);
     $version = $matches[1] ?? null;
@@ -69,7 +69,7 @@ function find_theme_info($themeSlug, $themePath)
     $reqPhpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
 
     preg_match('/Description: (.*)Version:/', $styleCssContent, $matches);
-    $description = trim($matches[1] ?? null);
+    $description = trim($matches[1] ?? "No description provided");
 
     $banner = get_theme_banner($themePath);
     
@@ -84,7 +84,7 @@ function find_theme_info($themeSlug, $themePath)
         'testedWpVersion' => $testedWpVersion,
         'reqPhpVersion' => $reqPhpVersion,
         'description' => $description,
-        // No 'link' since it won't be afiliate
+        'link' => null,
     ];
 
     return $theme;
