@@ -1,27 +1,38 @@
 <?php
-
-// Open a connection to the database
-function open_database_connection() 
+class Database
 {
-    $servername = "localhost";
-    $username = "id21953222_wpdetector";
-    $password = "W3B3%i2@";
-    $dbname = "id21953222_wpdetector";
+    // Database credentials
+    private $servername = "localhost";
+    private $username = "id21953222_wpdetector";
+    private $password = "W3B3%i2@";
+    private $dbname = "id21953222_wpdetector";
+    private $conn;
 
-    $conn = new mysqli($servername, $username, $password, $dbname);
+    public function connect()
+    {
+        $this->conn = new mysqli($this->servername, $this->username, $this->password, $this->dbname);
 
-    if ($conn->connect_error) {
-        echo "Connection failed: " . $conn->connect_error;
+        // Check if the connection was successful
+        if ($this->conn->connect_error) {
+            die("Connection failed: " . $this->conn->connect_error);
+        }
     }
 
-    return $conn;
-}
+    public function query($sql)
+    {
+        $result = $this->conn->query($sql);
 
-// Close the connection to the database
-function close_database_connection($conn) 
-{
-    if ($conn) {
-        $conn->close();
+        // Check if the query execution was successful
+        if ($result === FALSE) {
+            die("Error: " . $sql . "<br>" . $this->conn->error);
+        }
+
+        return $result;
+    }
+
+    public function close()
+    {
+        $this->conn->close();
     }
 }
 ?>
