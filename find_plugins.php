@@ -126,8 +126,6 @@ function find_plugin_info($pluginSlug, $pluginPath)
         'link' => null,
     ];
 
-    // Write plugin to database
-
     return $plugin;
 }
 
