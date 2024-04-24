@@ -43,8 +43,6 @@ function find_themes($links)
                     // Insert the theme info into the database
                     $db->query("INSERT INTO themes (slug, banner, title, author, version, website, sanatizedWebsite, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, times_analyzed) VALUES ('$themeSlug', '$banner', '$title', '$author', '$version', '$website', '$sanatizedWebsite', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link', '$times_analyzed')");
 
-                    echo "Theme not in database";
-
                 } else {
                     $themeInfo = [
                         'banner' => $row['banner'],
@@ -59,8 +57,6 @@ function find_themes($links)
                         'description' => $row['description'],
                         'link' => $row['link'],
                     ];
-
-                    echo "Theme already in database";
                 }
 
                 $themes[$themeSlug] = $themeInfo;
