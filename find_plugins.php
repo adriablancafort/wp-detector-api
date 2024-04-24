@@ -5,7 +5,8 @@ function find_plugins($links)
 {
     $plugins = [];
 
-    //$conn = open_database_connection();
+    $db = new Database();
+    $db->connect();
 
     foreach ($links as $link) {
         if (preg_match('/.*\/plugins\/([^\/]*)/', $link, $matches)) {
@@ -17,17 +18,58 @@ function find_plugins($links)
             $pluginPath = $rootDomain . '/wp-content/plugins/' . $pluginSlug;
 
             if (!array_key_exists($pluginSlug, $plugins)) {
-                //$pluginInfo = database_read_plugin($conn, $pluginSlug);
-                //if (empty($pluginInfo)) {
+
+                $result = $db->query("SELECT * FROM plugins WHERE slug = '$pluginSlug'");
+                $row = $result->fetch_assoc();
+
+                if (empty($row)) {
                     $pluginInfo = find_plugin_info($pluginSlug, $pluginPath);
-                    //database_write_plugin($conn, $pluginSlug, $pluginInfo);
-                //}
+
+                    $banner = $pluginInfo['banner'];
+                    $icon = $pluginInfo['icon'];
+                    $title = $pluginInfo['title'];
+                    $contributors = $pluginInfo['contributors'];
+                    $version = $pluginInfo['version'];
+                    $website = $pluginInfo['website'];
+                    $sanatizedWebsite = $pluginInfo['sanatizedWebsite'];
+                    $reqWpVersion = $pluginInfo['reqWpVersion'];
+                    $testedWpVersion = $pluginInfo['testedWpVersion'];
+                    $reqPhpVersion = $pluginInfo['reqPhpVersion'];
+                    $description = $pluginInfo['description'];
+                    $link = '';
+                    $times_analyzed = 1;
+
+                    // Insert the theme info into the database
+                    $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, times_analyzed) VALUES ('$pluginSlug', '$banner', '$icon', '$title', '$contributors', '$version', '$website', '$sanatizedWebsite', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link', '$times_analyzed')");
+                    
+                    echo "\n Plugin not in database\n";
+
+                } else {
+                    $pluginInfo = [
+                        'banner' => $row['banner'],
+                        'icon' => $row['icon'],
+                        'title' => $row['title'],
+                        'contributors' => $row['contributors'],
+                        'version' => $row['version'],
+                        'website' => $row['website'],
+                        'sanatizedWebsite' => $row['sanatizedWebsite'],
+                        'reqWpVersion' => $row['reqWpVersion'],
+                        'testedWpVersion' => $row['testedWpVersion'],
+                        'reqPhpVersion' => $row['reqPhpVersion'],
+                        'description' => $row['description'],
+                        'link' => $row['link'],
+                    ];
+
+                    echo "\n Plugin in database\n";
+
+                }
+
                 $plugins[$pluginSlug] = $pluginInfo;
             }
         }
     }
 
-    //close_database_connection($conn);
+    $db->close();
 
     return $plugins;
 }
@@ -147,17 +189,5 @@ function get_plugin_icon($pluginSlug)
     }
 
     return '/no-plugin-icon.svg';
-}
-
-function database_read_plugin($conn, $pluginSlug)
-{
-    // Read pluginInfo associated with a pluginSlug in the plugins table
-    return null;
-}
-
-function database_write_plugin($conn, $pluginSlug, $pluginInfo)
-{
-    // Write pluginInfo associated with a pluginSlug in the plugins table
-    return null;
 }
 ?>
