@@ -1,11 +1,14 @@
 <?php
 
+require_once 'database_connection.php';
+
 // Returns all the themes of the given url
 function find_themes($links)
 {
     $themes = [];
 
-    //$conn = open_database_connection();
+    $db = new Database();
+    $db->connect();
 
     foreach ($links as $link) {
         if (preg_match('/.*\/themes\/([^\/]*)/', $link, $matches)) {
@@ -17,17 +20,55 @@ function find_themes($links)
             $themePath = $rootDomain . '/wp-content/themes/' . $themeSlug;
 
             if (!array_key_exists($themeSlug, $themes)) {
-                //$themeInfo = database_read_theme($conn, $themeSlug);
-                //if (empty($themeInfo)) {
+
+                $result = $db->query("SELECT * FROM themes WHERE slug = '$themeSlug'");
+                $row = $result->fetch_assoc();
+
+                if (empty($row)) {
                     $themeInfo = find_theme_info($themeSlug, $themePath);
-                    //database_write_theme($conn, $themeSlug, $themeInfo);
-                //}
+
+                    $banner = $themeInfo['banner'];
+                    $title = $themeInfo['title'];
+                    $author = $themeInfo['author'];
+                    $version = $themeInfo['version'];
+                    $website = $themeInfo['website'];
+                    $sanatizedWebsite = $themeInfo['sanatizedWebsite'];
+                    $reqWpVersion = $themeInfo['reqWpVersion'];
+                    $testedWpVersion = $themeInfo['testedWpVersion'];
+                    $reqPhpVersion = $themeInfo['reqPhpVersion'];
+                    $description = $themeInfo['description'];
+                    $link = '';
+                    $times_analyzed = 1;
+
+                    // Insert the theme info into the database
+                    $db->query("INSERT INTO themes (slug, banner, title, author, version, website, sanatizedWebsite, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, times_analyzed) VALUES ('$themeSlug', '$banner', '$title', '$author', '$version', '$website', '$sanatizedWebsite', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link', '$times_analyzed')");
+
+                    echo "Theme not in database";
+
+                } else {
+                    $themeInfo = [
+                        'banner' => $row['banner'],
+                        'title' => $row['title'],
+                        'author' => $row['author'],
+                        'version' => $row['version'],
+                        'website' => $row['website'],
+                        'sanatizedWebsite' => $row['sanatizedWebsite'],
+                        'reqWpVersion' => $row['reqWpVersion'],
+                        'testedWpVersion' => $row['testedWpVersion'],
+                        'reqPhpVersion' => $row['reqPhpVersion'],
+                        'description' => $row['description'],
+                        'link' => $row['link'],
+                    ];
+
+                    echo "Theme already in database";
+                }
+
                 $themes[$themeSlug] = $themeInfo;
             }
         }
     }
 
-    //close_database_connection($conn);
+    $db->close();
 
     return $themes;
 }
@@ -111,17 +152,5 @@ function get_theme_banner($themePath)
     }
 
     return '/no-theme-image.svg';
-}
-
-function database_read_theme($conn, $themeSlug)
-{
-    // Read themeInfo associated with a themeSlug in the themes table
-    return null;
-}
-
-function database_write_theme($conn, $themeSlug, $themeInfo)
-{
-    // Write themeInfo associated with a themeSlug in the themes table
-    return null;
 }
 ?>
