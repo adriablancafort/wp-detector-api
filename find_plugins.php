@@ -41,8 +41,6 @@ function find_plugins($links)
 
                     // Insert the theme info into the database
                     $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, times_analyzed) VALUES ('$pluginSlug', '$banner', '$icon', '$title', '$contributors', '$version', '$website', '$sanatizedWebsite', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link', '$times_analyzed')");
-                    
-                    echo "\n Plugin not in database\n";
 
                 } else {
                     $pluginInfo = [
@@ -59,9 +57,6 @@ function find_plugins($links)
                         'description' => $row['description'],
                         'link' => $row['link'],
                     ];
-
-                    echo "\n Plugin in database\n";
-
                 }
 
                 $plugins[$pluginSlug] = $pluginInfo;
