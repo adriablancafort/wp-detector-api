@@ -24,12 +24,8 @@ function get_wp($url)
         $wpbool = $wp ? '1' : '0';
         $db->query("INSERT INTO websites (url, wp) VALUES ('$url', '$wpbool')");
 
-        echo "The website is not in the database\n";
-
     } else {
         $wp = $row['wp'] === '1';
-
-        echo "The website is already in the database\n";
     }
 
     $db->close();
