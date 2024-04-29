@@ -75,7 +75,7 @@ function find_themes($links)
     return $themes;
 }
 
-// Returns the theme information in the wordpress directory given a theme path
+// Returns the theme information in the wordpress directory given a theme slug
 function find_theme_info_in_directory($themeSlug)
 {
     require_once 'get_content.php';
