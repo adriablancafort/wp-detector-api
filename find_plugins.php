@@ -23,7 +23,10 @@ function find_plugins($links)
                 $row = $result->fetch_assoc();
 
                 if (empty($row)) {
-                    $pluginInfo = find_plugin_info($pluginSlug, $pluginPath);
+                    $pluginInfo = find_plugin_info_in_directory($pluginSlug);
+                    if (empty($pluginInfo)) {
+                        $pluginInfo = find_plugin_info_in_website($pluginSlug, $pluginPath);
+                    }
 
                     $banner = $pluginInfo['banner'];
                     $icon = $pluginInfo['icon'];
@@ -32,6 +35,8 @@ function find_plugins($links)
                     $version = $pluginInfo['version'];
                     $website = $pluginInfo['website'];
                     $sanatizedWebsite = $pluginInfo['sanatizedWebsite'];
+                    $lastUpdated = $pluginInfo['lastUpdated'];
+                    $activeInstallations = $pluginInfo['activeInstallations'];
                     $reqWpVersion = $pluginInfo['reqWpVersion'];
                     $testedWpVersion = $pluginInfo['testedWpVersion'];
                     $reqPhpVersion = $pluginInfo['reqPhpVersion'];
@@ -40,7 +45,7 @@ function find_plugins($links)
                     $times_analyzed = 1;
 
                     // Insert the theme info into the database
-                    $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, times_analyzed) VALUES ('$pluginSlug', '$banner', '$icon', '$title', '$contributors', '$version', '$website', '$sanatizedWebsite', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link', '$times_analyzed')");
+                    $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, times_analyzed) VALUES ('$pluginSlug', '$banner', '$icon', '$title', '$contributors', '$version', '$website', '$sanatizedWebsite', '$lastUpdated', '$activeInstallations', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link', '$times_analyzed')");
 
                 } else {
                     $pluginInfo = [
@@ -51,6 +56,8 @@ function find_plugins($links)
                         'version' => $row['version'],
                         'website' => $row['website'],
                         'sanatizedWebsite' => $row['sanatizedWebsite'],
+                        'lastUpdated' => $row['lastUpdated'],
+                        'activeInstallations' => $row['activeInstallations'],
                         'reqWpVersion' => $row['reqWpVersion'],
                         'testedWpVersion' => $row['testedWpVersion'],
                         'reqPhpVersion' => $row['reqPhpVersion'],
@@ -69,8 +76,77 @@ function find_plugins($links)
     return $plugins;
 }
 
+// Returns the plugin information in the wordpress directory given a plugin slug
+function find_plugin_info_in_directory($pluginsSlug)
+{
+    require_once 'get_content.php';
+    $directoryUrl = 'https://wordpress.org/plugins/' . $pluginsSlug;
+    $directoryContent = get_content($directoryUrl);
+
+    if (empty($directoryContent)) {
+        return null;
+    }
+
+    preg_match('/<h1 class="plugin-title">(.*?)<\/h1>/', $directoryContent, $matches);
+    $title = $matches[1] ?? null;
+
+    preg_match('/<span class="byline">By <span class="author vcard"><a class="url fn n" rel="nofollow" href=".*?">(.*?)<\/a><\/span><\/span>/', $readmeTxtContent, $matches);
+    $author = $matches[1] ?? "No contributors found";
+
+    preg_match('/<li>\s*Version: <strong>(.*?)<\/strong>\s*<\/li>/', $readmeTxtContent, $matches);
+    $version = $matches[1] ?? null;
+
+    preg_match('/<li>\s*Last updated: <strong><span>(.*?)<\/span><\/strong>\s*<\/li>/', $directoryContent, $matches);
+    $lastUpdated = $matches[1] ?? null;
+
+    preg_match('/<li>\s*Active installations: <strong>(.*?)<\/strong>\s*<\/li>/', $directoryContent, $matches);
+    $activeInstallations = $matches[1] ?? null;
+
+    preg_match('/<a href="(.*?)" rel="nofollow">Support<\/a>/', $readmeTxtContent, $matches);
+    $website = $matches[1] ?? null;
+
+    $sanatizedWebsite = str_replace(['http://', 'https://'], '', $website);
+
+    preg_match('/<li>\s*WordPress Version:\s*<strong>\s*(.*?) or higher\s*<\/strong>\s*<\/li>/', $readmeTxtContent, $matches);
+    $reqWpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
+
+    preg_match('/<li>\s*Tested up to: <strong>(.*?)<\/strong>\s*<\/li>/', $readmeTxtContent, $matches);
+    $testedWpVersion = $matches[1] ?? null;
+
+    preg_match('/<li>\s*PHP Version:\s*<strong>\s*(.*?) or higher\s*<\/strong>\s*<\/li>/', $readmeTxtContent, $matches);
+    $reqPhpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
+
+    preg_match('/== Description ==\n\n(.*)/', $readmeTxtContent, $matches);
+    $description = $matches[1] ?? 'No description provided';
+
+    preg_match('/<img class="plugin-icon" src="(.*?)">/', $directoryContent, $matches);
+    $icon = $matches[1] ?? '/no-plugin-icon.svg';
+
+    preg_match("/background-image: url\('(.*?)'\);/", $directoryContent, $matches);
+    $banner = $matches[1] ?? '/no-plugin-banner.svg';
+
+    $plugin = [
+        'banner' => $banner,
+        'icon' => $icon,
+        'title' => $title,
+        'contributors' => $author,
+        'version' => $version,
+        'website' => $website,
+        'sanatizedWebsite' => $sanatizedWebsite,
+        'lastUpdated' => $lastUpdated,
+        'activeInstallations' => $activeInstallations,
+        'reqWpVersion' => $reqWpVersion,
+        'testedWpVersion' => $testedWpVersion,
+        'reqPhpVersion' => $reqPhpVersion,
+        'description' => $description,
+        'link' => $directoryUrl,
+    ];
+
+    return $plugin;
+}
+
 // Returns the plugin information given a plugin path
-function find_plugin_info($pluginSlug, $pluginPath)
+function find_plugin_info_in_website($pluginSlug, $pluginPath)
 {
     require_once 'get_content.php';
     $readmeTxtUrl =  $pluginPath . '/readme.txt';
@@ -108,8 +184,8 @@ function find_plugin_info($pluginSlug, $pluginPath)
     preg_match('/== Description ==\n\n(.*)/', $readmeTxtContent, $matches);
     $description = $matches[1] ?? 'No description provided';
 
-    $banner = get_plugin_banner($pluginSlug);
-    $icon = get_plugin_icon($pluginSlug);
+    $banner = '/no-plugin-banner.svg';
+    $icon = '/no-plugin-icon.svg';
 
     $plugin = [
         'banner' => $banner,
@@ -119,6 +195,8 @@ function find_plugin_info($pluginSlug, $pluginPath)
         'version' => $version,
         'website' => $website,
         'sanatizedWebsite' => $sanatizedWebsite,
+        'lastUpdated' => null,
+        'activeInstallations' => null,
         'reqWpVersion' => $reqWpVersion,
         'testedWpVersion' => $testedWpVersion,
         'reqPhpVersion' => $reqPhpVersion,
@@ -127,60 +205,5 @@ function find_plugin_info($pluginSlug, $pluginPath)
     ];
 
     return $plugin;
-}
-
-// Returns the banner URL of the plugin
-function get_plugin_banner($pluginSlug)
-{
-    $baseUrl = 'https://ps.w.org/' . $pluginSlug . '/assets/';
-
-    $bannerUrls = [
-        $baseUrl . 'banner-1544x500.png',
-        $baseUrl . 'banner-1544x500.jpg',
-        $baseUrl . 'banner-772x250.png',
-        $baseUrl . 'banner-772x250.jpg',
-    ];
-
-    foreach ($bannerUrls as $url) {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_NOBODY, true);
-        curl_exec($ch);
-        $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($statusCode == 200) {
-            return $url;
-        }
-    }
-
-    return '/no-plugin-banner.svg';
-}
-
-// Returns the icon URL of the plugin
-function get_plugin_icon($pluginSlug)
-{
-    $baseUrl = 'https://ps.w.org/' . $pluginSlug . '/assets/';
-
-    $iconUrls = [
-        $baseUrl . 'icon.svg',
-        $baseUrl . 'icon-128x128.png',
-        $baseUrl . 'icon-128x128.gif',
-        $baseUrl . 'icon-256x256.png',
-        $baseUrl . 'icon-256x256.gif',
-    ];
-
-    foreach ($iconUrls as $url) {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_NOBODY, true);
-        curl_exec($ch);
-        $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($statusCode == 200) {
-            return $url;
-        }
-    }
-
-    return '/no-plugin-icon.svg';
 }
 ?>
