@@ -25,14 +25,19 @@ function find_themes($links)
                 $row = $result->fetch_assoc();
 
                 if (empty($row)) {
-                    $themeInfo = find_theme_info($themeSlug, $themePath);
+                    $themeInfo = find_theme_info_in_directory($themeSlug);
+                    if (empty($themeInfo)) {
+                        $themeInfo = find_theme_info_in_website($themeSlug, $themePath);
+                    }
 
-                    $banner = $themeInfo['banner'];
+                    $screenshot = $themeInfo['screenshot'];
                     $title = $themeInfo['title'];
                     $author = $themeInfo['author'];
                     $version = $themeInfo['version'];
                     $website = $themeInfo['website'];
                     $sanatizedWebsite = $themeInfo['sanatizedWebsite'];
+                    $lastUpdated = $themeInfo['lastUpdated'];
+                    $activeInstallations = $themeInfo['activeInstallations'];
                     $reqWpVersion = $themeInfo['reqWpVersion'];
                     $testedWpVersion = $themeInfo['testedWpVersion'];
                     $reqPhpVersion = $themeInfo['reqPhpVersion'];
@@ -41,16 +46,17 @@ function find_themes($links)
                     $times_analyzed = 1;
 
                     // Insert the theme info into the database
-                    $db->query("INSERT INTO themes (slug, banner, title, author, version, website, sanatizedWebsite, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, times_analyzed) VALUES ('$themeSlug', '$banner', '$title', '$author', '$version', '$website', '$sanatizedWebsite', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link', '$times_analyzed')");
-
+                    $db->query("INSERT INTO themes (slug, screenshot, title, author, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, times_analyzed) VALUES ('$themeSlug', '$screenshot', '$title', '$author', '$version', '$website', '$sanatizedWebsite', '$lastUpdated', '$activeInstallations', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link', '$times_analyzed')");
                 } else {
                     $themeInfo = [
-                        'banner' => $row['banner'],
+                        'screenshot' => $row['screenshot'],
                         'title' => $row['title'],
                         'author' => $row['author'],
                         'version' => $row['version'],
                         'website' => $row['website'],
                         'sanatizedWebsite' => $row['sanatizedWebsite'],
+                        'lastUpdated' => $row['lastUpdated'],
+                        'activeInstallations' => $row['activeInstallations'],
                         'reqWpVersion' => $row['reqWpVersion'],
                         'testedWpVersion' => $row['testedWpVersion'],
                         'reqPhpVersion' => $row['reqPhpVersion'],
@@ -69,8 +75,70 @@ function find_themes($links)
     return $themes;
 }
 
-// Returns the theme information given a theme path
-function find_theme_info($themeSlug, $themePath)
+// Returns the theme information in the wordpress directory given a theme path
+function find_theme_info_in_directory($themeSlug)
+{
+    require_once 'get_content.php';
+    $directoryUrl = 'https://wordpress.org/themes/' . $themeSlug;
+    $directoryContent = get_content($directoryUrl);
+
+    if (empty($directoryContent)) {
+        return null;
+    }
+
+    preg_match('/<h2 class="theme-name entry-title">(.*?)<\/h2>/', $directoryContent, $matches);
+    $title = $matches[1] ?? $themeTitle;
+
+    preg_match('/<p class="theme_homepage"><a href="(.*?)">Theme Homepage<\/a><\/p>/', $directoryContent, $matches);
+    $website = $matches[1] ?? null;
+
+    $sanatizedWebsite = str_replace(['http://', 'https://'], '', $website);
+
+    preg_match('/<div class="theme-author">By <a href="\/themes\/author\/.*?\/"><span class="author">(.*?)<\/span><\/a><\/div>/', $directoryContent, $matches);
+    $author = $matches[1] ?? "No author found";
+
+    preg_match('/<p class="version">Version: <strong>(.*?)<\/strong><\/p>/', $directoryContent, $matches);
+    $version = $matches[1] ?? null;
+
+    preg_match('/<p class="updated">Last updated: <strong>(.*?)<\/strong><\/p>/', $directoryContent, $matches);
+    $lastUpdated = $matches[1] ?? null;
+
+    preg_match('/<p class="active_installs">Active Installations: <strong>(.*?)<\/strong><\/p>/', $directoryContent, $matches);
+    $activeInstallations = $matches[1] ?? null;
+
+    preg_match('/<p class="requires">WordPress Version: <strong>(.*?) or higher<\/strong><\/p>/', $directoryContent, $matches);
+    $reqWpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
+
+    preg_match('/<p class="requires_php">PHP Version: <strong>(.*?) or higher<\/strong><\/p>/', $directoryContent, $matches);
+    $reqPhpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
+
+    preg_match('/<div class="theme-description entry-summary"><p>(.*?)<\/p><\/div>/', $directoryContent, $matches);
+    $description = trim($matches[1] ?? "No description provided");
+
+    preg_match('/<img src="(.*?)" srcset/', $directoryContent, $matches);
+    $screenshot = $matches[1] ?? "";
+
+    $theme = [
+        'screenshot' => $screenshot,
+        'title' => $title,
+        'author' => $author,
+        'version' => $version,
+        'website' => $website,
+        'sanatizedWebsite' => $sanatizedWebsite,
+        'lastUpdated' => $lastUpdated,
+        'activeInstallations' => $activeInstallations,
+        'reqWpVersion' => $reqWpVersion,
+        'testedWpVersion' => null,
+        'reqPhpVersion' => $reqPhpVersion,
+        'description' => $description,
+        'link' => $website,
+    ];
+
+    return $theme;
+}
+
+// Returns the theme information in the website given a theme path
+function find_theme_info_in_website($themeSlug, $themePath)
 {
     require_once 'get_content.php';
     $styleCssUrl =  $themePath . '/style.css';
@@ -108,15 +176,17 @@ function find_theme_info($themeSlug, $themePath)
     preg_match('/Description: (.*)Version:/', $styleCssContent, $matches);
     $description = trim($matches[1] ?? "No description provided");
 
-    $banner = get_theme_banner($themePath);
-    
+    $screenshot = get_theme_screenshot_in_website($themePath);
+
     $theme = [
-        'banner' => $banner,
+        'screenshot' => $screenshot,
         'title' => $title,
         'author' => $author,
         'version' => $version,
         'website' => $website,
         'sanatizedWebsite' => $sanatizedWebsite,
+        'lastUpdated' => null,
+        'activeInstallations' => null,
         'reqWpVersion' => $reqWpVersion,
         'testedWpVersion' => $testedWpVersion,
         'reqPhpVersion' => $reqPhpVersion,
@@ -127,15 +197,15 @@ function find_theme_info($themeSlug, $themePath)
     return $theme;
 }
 
-// Returns the banner URL of the theme
-function get_theme_banner($themePath)
+// Returns the screenshot URL of the theme
+function get_theme_screenshot_in_website($themePath)
 {
-    $bannerUrls = [
+    $screenshotUrls = [
         $themePath . '/screenshot.png',
         $themePath . '/screenshot.jpg'
     ];
 
-    foreach ($bannerUrls as $url) {
+    foreach ($screenshotUrls as $url) {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_NOBODY, true);
         curl_exec($ch);
@@ -149,4 +219,3 @@ function get_theme_banner($themePath)
 
     return '/no-theme-image.svg';
 }
-?>
