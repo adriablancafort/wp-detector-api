@@ -131,7 +131,7 @@ function find_theme_info_in_directory($themeSlug)
         'testedWpVersion' => null,
         'reqPhpVersion' => $reqPhpVersion,
         'description' => $description,
-        'link' => $website,
+        'link' => $directoryUrl,
     ];
 
     return $theme;
