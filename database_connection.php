@@ -2,10 +2,10 @@
 class Database
 {
     // Database credentials
-    private $servername = "localhost";
-    private $username = "id21953222_wpdetector";
-    private $password = "W3B3%i2@";
-    private $dbname = "id21953222_wpdetector";
+    private $servername = '127.0.0.1';
+    private $username = 'wpdetector';
+    private $password = 'ppG0emJjt8ZSxTPt9khE';
+    private $dbname = 'wpdetector';
     private $conn;
 
     public function connect()
