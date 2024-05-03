@@ -23,11 +23,11 @@ if ($type === 'wp') {
     echo json_encode(['plugins' => $plugins]);
     
 } elseif ($type === 'top-themes') {
-    $themes = get_themes($url);
+    $themes = get_top_themes();
     echo json_encode(['themes' => $themes]);
 
 } elseif ($type === 'top-plugins') {
-    $plugins = get_plugins($url);
+    $plugins = get_top_plugins();
     echo json_encode(['plugins' => $plugins]);
 }
 ?>
