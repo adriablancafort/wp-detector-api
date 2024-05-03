@@ -60,4 +60,36 @@ function get_themes($url)
 
     return $themes;
 }
+
+function get_top_themes() 
+{
+    $db = new Database();
+    $db->connect();
+
+    $result = $db->query("SELECT * FROM themes ORDER BY timesAnalyzed DESC LIMIT 5");
+
+    while ($row = $result->fetch_assoc()) {
+        $themeInfo = [
+            'screenshot' => $row['screenshot'],
+            'title' => $row['title'],
+            'author' => $row['author'],
+            'version' => $row['version'],
+            'website' => $row['website'],
+            'sanatizedWebsite' => $row['sanatizedWebsite'],
+            'lastUpdated' => $row['lastUpdated'],
+            'activeInstallations' => $row['activeInstallations'],
+            'reqWpVersion' => $row['reqWpVersion'],
+            'testedWpVersion' => $row['testedWpVersion'],
+            'reqPhpVersion' => $row['reqPhpVersion'],
+            'description' => $row['description'],
+            'link' => $row['link'],
+        ];
+
+        $themes[] = $themeInfo;
+    }
+
+    $db->close();
+
+    return $themes;
+}
 ?>
