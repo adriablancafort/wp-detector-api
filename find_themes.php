@@ -25,10 +25,10 @@ function find_themes($links)
                 $row = $result->fetch_assoc();
 
                 if (empty($row)) {
-                    $themeInfo = find_theme_info_in_directory($themeSlug);
-                    if (empty($themeInfo)) {
+                    //$themeInfo = find_theme_info_in_directory($themeSlug);
+                    //if (empty($themeInfo)) {
                         $themeInfo = find_theme_info_in_website($themeSlug, $themePath);
-                    }
+                    //}
 
                     $screenshot = $themeInfo['screenshot'];
                     $title = $themeInfo['title'];
@@ -43,10 +43,10 @@ function find_themes($links)
                     $reqPhpVersion = $themeInfo['reqPhpVersion'];
                     $description = $themeInfo['description'];
                     $link = '';
-                    $times_analyzed = 1;
 
                     // Insert the theme info into the database
-                    $db->query("INSERT INTO themes (slug, screenshot, title, author, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, times_analyzed) VALUES ('$themeSlug', '$screenshot', '$title', '$author', '$version', '$website', '$sanatizedWebsite', '$lastUpdated', '$activeInstallations', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link', '$times_analyzed')");
+                    $db->query("INSERT INTO themes (slug, screenshot, title, author, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, times_analyzed, last_analyzed) VALUES ('$themeSlug', '$screenshot', '$title', '$author', '$version', '$website', '$sanatizedWebsite', '$lastUpdated', '$activeInstallations', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link', 1, NOW())");
+
                 } else {
                     $themeInfo = [
                         'screenshot' => $row['screenshot'],
