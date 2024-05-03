@@ -61,4 +61,37 @@ function get_plugins($url)
 
     return $plugins;
 }
+
+function get_top_plugins()
+{
+    $db = new Database();
+    $db->connect();
+
+    $result = $db->query("SELECT * FROM plugins ORDER BY timesAnalyzed DESC LIMIT 5");
+
+    while ($row = $result->fetch_assoc()) {
+        $pluginInfo = [
+            'banner' => $row['banner'],
+            'icon' => $row['icon'],
+            'title' => $row['title'],
+            'contributors' => $row['contributors'],
+            'version' => $row['version'],
+            'website' => $row['website'],
+            'sanatizedWebsite' => $row['sanatizedWebsite'],
+            'lastUpdated' => $row['lastUpdated'],
+            'activeInstallations' => $row['activeInstallations'],
+            'reqWpVersion' => $row['reqWpVersion'],
+            'testedWpVersion' => $row['testedWpVersion'],
+            'reqPhpVersion' => $row['reqPhpVersion'],
+            'description' => $row['description'],
+            'link' => $row['link'],
+        ];
+
+        $plugins[] = $pluginInfo;
+    }
+
+    $db->close();
+
+    return $plugins;
+}
 ?>
