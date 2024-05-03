@@ -14,7 +14,6 @@ function get_themes($url)
     $row = $result->fetch_assoc();
 
     if (empty($row)) {
-
     */
         require_once 'get_content.php';
         require_once 'find_links.php';
