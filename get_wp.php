@@ -22,8 +22,8 @@ function get_wp($url)
 
         // Write the result in the column wp in the table websites for the website $url
         $wpbool = $wp ? '1' : '0';
-        $db->query("INSERT INTO websites (url, wp) VALUES ('$url', '$wpbool')");
-
+        $db->query("INSERT INTO websites (url, wp, times_analyzed, last_analyzed) VALUES ('$url', '$wpbool', 1, NOW())");
+        
     } else {
         $wp = $row['wp'] === '1';
     }
