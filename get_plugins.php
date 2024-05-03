@@ -5,6 +5,7 @@ require_once 'database_connection.php';
 // Returns the plugins of a given url
 function get_plugins($url)
 {
+    /*
     $db = new Database();
     $db->connect();
 
@@ -13,6 +14,7 @@ function get_plugins($url)
     $row = $result->fetch_assoc();
 
     if (empty($row)) {
+    */
         require_once 'get_content.php';
         require_once 'find_links.php';
         require_once 'find_plugins.php';
@@ -21,7 +23,9 @@ function get_plugins($url)
         $plugins = find_plugins($links);
 
         // Convert the associative array to an indexed array
-        $plugins = array_values($plugins);        
+        $plugins = array_values($plugins);
+
+    /*      
     } else {
         $plugins = [];
         $pluginSlugs = $row; // Correct to make an iterable array of slugs
@@ -32,9 +36,10 @@ function get_plugins($url)
             $row = $result->fetch_assoc();
 
             $pluginInfo = [
-                'screenshot' => $row['screenshot'],
+                'banner' => $row['banner'],
+                'icon' => $row['icon'],
                 'title' => $row['title'],
-                'author' => $row['author'],
+                'contributors' => $row['contributors'],
                 'version' => $row['version'],
                 'website' => $row['website'],
                 'sanatizedWebsite' => $row['sanatizedWebsite'],
@@ -52,6 +57,7 @@ function get_plugins($url)
     }
 
     $db->close();
+    */
 
     return $plugins;
 }
