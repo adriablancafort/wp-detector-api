@@ -1,5 +1,7 @@
 <?php
 
+require_once 'database_connection.php';
+
 // Returns all the plugins of the given url
 function find_plugins($links)
 {
@@ -23,10 +25,10 @@ function find_plugins($links)
                 $row = $result->fetch_assoc();
 
                 if (empty($row)) {
-                    $pluginInfo = find_plugin_info_in_directory($pluginSlug);
-                    if (empty($pluginInfo)) {
-                        $pluginInfo = find_plugin_info_in_website($pluginSlug, $pluginPath);
-                    }
+                    //$pluginInfo = find_plugin_info_in_directory($pluginSlug);
+                    //if (empty($pluginInfo)) {
+                    $pluginInfo = find_plugin_info_in_website($pluginSlug, $pluginPath);
+                    //}
 
                     $banner = $pluginInfo['banner'];
                     $icon = $pluginInfo['icon'];
@@ -45,7 +47,7 @@ function find_plugins($links)
                     $times_analyzed = 1;
 
                     // Insert the theme info into the database
-                    $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, times_analyzed) VALUES ('$pluginSlug', '$banner', '$icon', '$title', '$contributors', '$version', '$website', '$sanatizedWebsite', '$lastUpdated', '$activeInstallations', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link', '$times_analyzed')");
+                    //$db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, times_analyzed, last_analyzed) VALUES ('$pluginSlug', '$banner', '$icon', '$title', '$contributors', '$version', '$website', '$sanatizedWebsite', '$lastUpdated', '$activeInstallations', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link',  1, NOW())");
 
                 } else {
                     $pluginInfo = [
@@ -151,7 +153,7 @@ function find_plugin_info_in_website($pluginSlug, $pluginPath)
     require_once 'get_content.php';
     $readmeTxtUrl =  $pluginPath . '/readme.txt';
     $readmeTxtContent = get_content($readmeTxtUrl);
-    
+
     preg_match('/=== (.*) ===/', $readmeTxtContent, $matches);
     if (!isset($matches[1])) {
         // Convert "plugin-slug" to "Plugin Slug"
