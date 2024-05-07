@@ -76,6 +76,9 @@ function get_theme_info($db, $themeSlug, $themePath)
             'description' => $row['description'],
             'link' => $row['link'],
         ];
+
+        // Update timesAnalyzed and lastAnalyzed
+        $db->query("UPDATE themes SET timesAnalyzed = timesAnalyzed + 1, lastAnalyzed = NOW() WHERE slug = '$themeSlug'");    
     }
 
     return $themeInfo;

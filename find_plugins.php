@@ -78,6 +78,9 @@ function get_plugin_info($db, $pluginSlug, $pluginPath)
             'description' => $row['description'],
             'link' => $row['link'],
         ];
+
+        // Update timesAnalyzed and lastAnalyzed
+        $db->query("UPDATE plugins SET timesAnalyzed = timesAnalyzed + 1, lastAnalyzed = NOW() WHERE slug = '$pluginSlug'");
     }
 
     return $pluginInfo;

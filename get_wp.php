@@ -22,9 +22,12 @@ function get_wp($url)
 
         // Write the result in the column wp in the table websites for the website $url
         $wpbool = $wp ? '1' : '0';
-        $db->query("INSERT INTO websites (url, wp, times_analyzed, last_analyzed) VALUES ('$url', '$wpbool', 1, NOW())");
+        $db->query("INSERT INTO websites (url, wp, timesAnalyzed, lastAnalyzed) VALUES ('$url', '$wpbool', 1, NOW())");
         
     } else {
+        // Update timesAnalyzed and lastAnalyzed
+        $db->query("UPDATE websites SET timesAnalyzed = timesAnalyzed + 1, lastAnalyzed = NOW() WHERE url = '$url'");
+
         $wp = $row['wp'] === '1';
     }
 
