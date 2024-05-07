@@ -23,13 +23,12 @@ function get_themes($url)
         write_theme_slugs_to_database($db, $themes, $url);
 
     } else {
-
         // Split the string of theme slugs into an array
         $themeSlugs = explode(',', $row['themes']);
 
         foreach ($themeSlugs as $themeSlug) {
             $themeSlug = trim($themeSlug);
-            $themeInfo = get_theme_info($db, $themeSlug, "");
+            $themeInfo = get_theme_info($db, $themeSlug, null);
             $themes[$themeSlug] = $themeInfo;
         }
     }
@@ -57,7 +56,7 @@ function get_top_themes($quantity, $page)
     $quantity = filter_var($quantity, FILTER_VALIDATE_INT);
 
     if ($quantity === false) {
-        $quantity = 4;
+        $quantity = 5;
     }
 
     // Calculate the offset
