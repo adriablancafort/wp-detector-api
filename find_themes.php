@@ -20,51 +20,7 @@ function find_themes($links)
             $themePath = $rootDomain . '/wp-content/themes/' . $themeSlug;
 
             if (!array_key_exists($themeSlug, $themes)) {
-
-                $result = $db->query("SELECT * FROM themes WHERE slug = '$themeSlug'");
-                $row = $result->fetch_assoc();
-
-                if (empty($row)) {
-                    //$themeInfo = find_theme_info_in_directory($themeSlug);
-                    //if (empty($themeInfo)) {
-                        $themeInfo = find_theme_info_in_website($themeSlug, $themePath);
-                    //}
-
-                    $screenshot = $themeInfo['screenshot'];
-                    $title = $themeInfo['title'];
-                    $author = $themeInfo['author'];
-                    $version = $themeInfo['version'];
-                    $website = $themeInfo['website'];
-                    $sanatizedWebsite = $themeInfo['sanatizedWebsite'];
-                    $lastUpdated = $themeInfo['lastUpdated'];
-                    $activeInstallations = $themeInfo['activeInstallations'];
-                    $reqWpVersion = $themeInfo['reqWpVersion'];
-                    $testedWpVersion = $themeInfo['testedWpVersion'];
-                    $reqPhpVersion = $themeInfo['reqPhpVersion'];
-                    $description = $themeInfo['description'];
-                    $link = '';
-
-                    // Insert the theme info into the database
-                    $db->query("INSERT INTO themes (slug, screenshot, title, author, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$themeSlug', '$screenshot', '$title', '$author', '$version', '$website', '$sanatizedWebsite', '$lastUpdated', '$activeInstallations', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link', 1, NOW())");
-
-                } else {
-                    $themeInfo = [
-                        'screenshot' => $row['screenshot'],
-                        'title' => $row['title'],
-                        'author' => $row['author'],
-                        'version' => $row['version'],
-                        'website' => $row['website'],
-                        'sanatizedWebsite' => $row['sanatizedWebsite'],
-                        'lastUpdated' => $row['lastUpdated'],
-                        'activeInstallations' => $row['activeInstallations'],
-                        'reqWpVersion' => $row['reqWpVersion'],
-                        'testedWpVersion' => $row['testedWpVersion'],
-                        'reqPhpVersion' => $row['reqPhpVersion'],
-                        'description' => $row['description'],
-                        'link' => $row['link'],
-                    ];
-                }
-
+                $themeInfo = get_theme_info($db, $themeSlug, $themePath);
                 $themes[$themeSlug] = $themeInfo;
             }
         }
@@ -73,6 +29,56 @@ function find_themes($links)
     $db->close();
 
     return $themes;
+}
+
+// Returns the theme information of a given theme slug
+function get_theme_info($db, $themeSlug, $themePath)
+{
+    $result = $db->query("SELECT * FROM themes WHERE slug = '$themeSlug'");
+    $row = $result->fetch_assoc();
+
+    if (empty($row)) {
+        //$themeInfo = find_theme_info_in_directory($themeSlug);
+        //if (empty($themeInfo)) {
+        $themeInfo = find_theme_info_in_website($themeSlug, $themePath);
+        //}
+
+        $screenshot = $themeInfo['screenshot'];
+        $title = $themeInfo['title'];
+        $author = $themeInfo['author'];
+        $version = $themeInfo['version'];
+        $website = $themeInfo['website'];
+        $sanatizedWebsite = $themeInfo['sanatizedWebsite'];
+        $lastUpdated = $themeInfo['lastUpdated'];
+        $activeInstallations = $themeInfo['activeInstallations'];
+        $reqWpVersion = $themeInfo['reqWpVersion'];
+        $testedWpVersion = $themeInfo['testedWpVersion'];
+        $reqPhpVersion = $themeInfo['reqPhpVersion'];
+        $description = $themeInfo['description'];
+        $link = '';
+
+        // Insert the theme info into the database
+        $db->query("INSERT INTO themes (slug, screenshot, title, author, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$themeSlug', '$screenshot', '$title', '$author', '$version', '$website', '$sanatizedWebsite', '$lastUpdated', '$activeInstallations', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link', 1, NOW())");
+
+    } else {
+        $themeInfo = [
+            'screenshot' => $row['screenshot'],
+            'title' => $row['title'],
+            'author' => $row['author'],
+            'version' => $row['version'],
+            'website' => $row['website'],
+            'sanatizedWebsite' => $row['sanatizedWebsite'],
+            'lastUpdated' => $row['lastUpdated'],
+            'activeInstallations' => $row['activeInstallations'],
+            'reqWpVersion' => $row['reqWpVersion'],
+            'testedWpVersion' => $row['testedWpVersion'],
+            'reqPhpVersion' => $row['reqPhpVersion'],
+            'description' => $row['description'],
+            'link' => $row['link'],
+        ];
+    }
+
+    return $themeInfo;
 }
 
 // Returns the theme information in the wordpress directory given a theme slug
