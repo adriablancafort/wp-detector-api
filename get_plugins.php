@@ -13,7 +13,7 @@ function get_plugins($url)
     $result = $db->query("SELECT plugins FROM websites WHERE url = '$url'");
     $row = $result->fetch_assoc();
 
-    if (empty($row $row['plugins'])) {
+    if (empty($row['plugins'])) {
         require_once 'get_content.php';
         require_once 'find_links.php';
         require_once 'find_plugins.php';
