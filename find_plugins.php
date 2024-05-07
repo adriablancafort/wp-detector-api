@@ -20,53 +20,7 @@ function find_plugins($links)
             $pluginPath = $rootDomain . '/wp-content/plugins/' . $pluginSlug;
 
             if (!array_key_exists($pluginSlug, $plugins)) {
-
-                $result = $db->query("SELECT * FROM plugins WHERE slug = '$pluginSlug'");
-                $row = $result->fetch_assoc();
-
-                if (empty($row)) {
-                    //$pluginInfo = find_plugin_info_in_directory($pluginSlug);
-                    //if (empty($pluginInfo)) {
-                    $pluginInfo = find_plugin_info_in_website($pluginSlug, $pluginPath);
-                    //}
-
-                    $banner = $pluginInfo['banner'];
-                    $icon = $pluginInfo['icon'];
-                    $title = $pluginInfo['title'];
-                    $contributors = $pluginInfo['contributors'];
-                    $version = $pluginInfo['version'];
-                    $website = $pluginInfo['website'];
-                    $sanatizedWebsite = $pluginInfo['sanatizedWebsite'];
-                    $lastUpdated = $pluginInfo['lastUpdated'];
-                    $activeInstallations = $pluginInfo['activeInstallations'];
-                    $reqWpVersion = $pluginInfo['reqWpVersion'];
-                    $testedWpVersion = $pluginInfo['testedWpVersion'];
-                    $reqPhpVersion = $pluginInfo['reqPhpVersion'];
-                    $description = $pluginInfo['description'];
-                    $link = '';
-
-                    // Insert the theme info into the database
-                    $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$pluginSlug', '$banner', '$icon', '$title', '$contributors', '$version', '$website', '$sanatizedWebsite', '$lastUpdated', '$activeInstallations', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link',  1, NOW())");
-
-                } else {
-                    $pluginInfo = [
-                        'banner' => $row['banner'],
-                        'icon' => $row['icon'],
-                        'title' => $row['title'],
-                        'contributors' => $row['contributors'],
-                        'version' => $row['version'],
-                        'website' => $row['website'],
-                        'sanatizedWebsite' => $row['sanatizedWebsite'],
-                        'lastUpdated' => $row['lastUpdated'],
-                        'activeInstallations' => $row['activeInstallations'],
-                        'reqWpVersion' => $row['reqWpVersion'],
-                        'testedWpVersion' => $row['testedWpVersion'],
-                        'reqPhpVersion' => $row['reqPhpVersion'],
-                        'description' => $row['description'],
-                        'link' => $row['link'],
-                    ];
-                }
-
+                $pluginInfo = get_plugin_info($db, $pluginSlug, $pluginPath);
                 $plugins[$pluginSlug] = $pluginInfo;
             }
         }
@@ -75,6 +29,58 @@ function find_plugins($links)
     $db->close();
 
     return $plugins;
+}
+
+// Returns the plugin information of a given plugin slug
+function get_plugin_info($db, $pluginSlug, $pluginPath)
+{
+    $result = $db->query("SELECT * FROM plugins WHERE slug = '$pluginSlug'");
+    $row = $result->fetch_assoc();
+
+    if (empty($row)) {
+        //$pluginInfo = find_plugin_info_in_directory($pluginSlug);
+        //if (empty($pluginInfo)) {
+        $pluginInfo = find_plugin_info_in_website($pluginSlug, $pluginPath);
+        //}
+
+        $banner = $pluginInfo['banner'];
+        $icon = $pluginInfo['icon'];
+        $title = $pluginInfo['title'];
+        $contributors = $pluginInfo['contributors'];
+        $version = $pluginInfo['version'];
+        $website = $pluginInfo['website'];
+        $sanatizedWebsite = $pluginInfo['sanatizedWebsite'];
+        $lastUpdated = $pluginInfo['lastUpdated'];
+        $activeInstallations = $pluginInfo['activeInstallations'];
+        $reqWpVersion = $pluginInfo['reqWpVersion'];
+        $testedWpVersion = $pluginInfo['testedWpVersion'];
+        $reqPhpVersion = $pluginInfo['reqPhpVersion'];
+        $description = $pluginInfo['description'];
+        $link = '';
+
+        // Insert the theme info into the database
+        $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$pluginSlug', '$banner', '$icon', '$title', '$contributors', '$version', '$website', '$sanatizedWebsite', '$lastUpdated', '$activeInstallations', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link',  1, NOW())");
+    
+    } else {
+        $pluginInfo = [
+            'banner' => $row['banner'],
+            'icon' => $row['icon'],
+            'title' => $row['title'],
+            'contributors' => $row['contributors'],
+            'version' => $row['version'],
+            'website' => $row['website'],
+            'sanatizedWebsite' => $row['sanatizedWebsite'],
+            'lastUpdated' => $row['lastUpdated'],
+            'activeInstallations' => $row['activeInstallations'],
+            'reqWpVersion' => $row['reqWpVersion'],
+            'testedWpVersion' => $row['testedWpVersion'],
+            'reqPhpVersion' => $row['reqPhpVersion'],
+            'description' => $row['description'],
+            'link' => $row['link'],
+        ];
+    }
+
+    return $pluginInfo;
 }
 
 // Returns the plugin information in the wordpress directory given a plugin slug
