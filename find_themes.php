@@ -19,7 +19,7 @@ function find_themes($links)
             $rootDomain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
             $themePath = $rootDomain . '/wp-content/themes/' . $themeSlug;
 
-            if (!array_key_exists($themeSlug, $themes)) {
+            if (!array_key_exists($themeSlug, $themes) && preg_match('/^[a-z\-]+$/', $themeSlug)) {
                 $themeInfo = get_theme_info($db, $themeSlug, $themePath);
                 $themes[$themeSlug] = $themeInfo;
             }

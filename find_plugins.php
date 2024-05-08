@@ -19,7 +19,7 @@ function find_plugins($links)
             $rootDomain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
             $pluginPath = $rootDomain . '/wp-content/plugins/' . $pluginSlug;
 
-            if (!array_key_exists($pluginSlug, $plugins)) {
+            if (!array_key_exists($pluginSlug, $plugins) && preg_match('/^[a-z\-]+$/', $pluginSlug)) {
                 $pluginInfo = get_plugin_info($db, $pluginSlug, $pluginPath);
                 $plugins[$pluginSlug] = $pluginInfo;
             }
