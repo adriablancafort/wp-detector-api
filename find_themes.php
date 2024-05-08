@@ -226,5 +226,5 @@ function get_theme_screenshot_in_website($themePath)
         }
     }
 
-    return '/no-theme-image.svg';
+    return '/no-theme-screenshot.svg';
 }
