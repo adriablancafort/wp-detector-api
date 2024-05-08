@@ -21,7 +21,9 @@ function find_themes($links)
 
             if (!array_key_exists($themeSlug, $themes) && preg_match('/^[a-z\-]+$/', $themeSlug)) {
                 $themeInfo = get_theme_info($db, $themeSlug, $themePath);
-                $themes[$themeSlug] = $themeInfo;
+                if (!empty($themeInfo)) {
+                    $themes[$themeSlug] = $themeInfo;
+                }
             }
         }
     }
@@ -41,6 +43,9 @@ function get_theme_info($db, $themeSlug, $themePath)
         //$themeInfo = find_theme_info_in_directory($themeSlug);
         //if (empty($themeInfo)) {
         $themeInfo = find_theme_info_in_website($themeSlug, $themePath);
+        //}
+        //if (empty($themeInfo)) {
+        //    return null;
         //}
 
         $screenshot = $themeInfo['screenshot'];

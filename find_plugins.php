@@ -21,7 +21,9 @@ function find_plugins($links)
 
             if (!array_key_exists($pluginSlug, $plugins) && preg_match('/^[a-z\-]+$/', $pluginSlug)) {
                 $pluginInfo = get_plugin_info($db, $pluginSlug, $pluginPath);
-                $plugins[$pluginSlug] = $pluginInfo;
+                if (!empty($pluginInfo)) {
+                    $plugins[$pluginSlug] = $pluginInfo;
+                }
             }
         }
     }
@@ -42,6 +44,10 @@ function get_plugin_info($db, $pluginSlug, $pluginPath)
         //if (empty($pluginInfo)) {
         $pluginInfo = find_plugin_info_in_website($pluginSlug, $pluginPath);
         //}
+        //if (empty($pluginInfo)) {
+        //    return null;
+        //}
+
 
         $banner = $pluginInfo['banner'];
         $icon = $pluginInfo['icon'];
@@ -58,7 +64,7 @@ function get_plugin_info($db, $pluginSlug, $pluginPath)
         $description = $pluginInfo['description'];
         $link = '';
 
-        // Insert the theme info into the database
+        // Insert the plugin info into the database
         $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$pluginSlug', '$banner', '$icon', '$title', '$contributors', '$version', '$website', '$sanatizedWebsite', '$lastUpdated', '$activeInstallations', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link',  1, NOW())");
     
     } else {
