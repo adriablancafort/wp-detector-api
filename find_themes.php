@@ -40,10 +40,10 @@ function get_theme_info($db, $themeSlug, $themePath)
     $row = $result->fetch_assoc();
 
     if (empty($row)) {
-        //$themeInfo = find_theme_info_in_directory($themeSlug);
-        //if (empty($themeInfo)) {
-        $themeInfo = find_theme_info_in_website($themeSlug, $themePath);
-        //}
+        $themeInfo = find_theme_info_in_directory($themeSlug);
+        if (empty($themeInfo)) {
+            $themeInfo = find_theme_info_in_website($themeSlug, $themePath);
+        }
         //if (empty($themeInfo)) {
         //    return null;
         //}
@@ -93,44 +93,70 @@ function get_theme_info($db, $themeSlug, $themePath)
 function find_theme_info_in_directory($themeSlug)
 {
     require_once 'get_content.php';
-    $directoryUrl = 'https://wordpress.org/themes/' . $themeSlug;
-    $directoryContent = get_content($directoryUrl);
 
-    if (empty($directoryContent)) {
+    $url = "https://wordpress.org/themes/" . $themeSlug;
+    $html = get_content($url);
+
+    $dom = new DOMDocument;
+    libxml_use_internal_errors(true);
+    $dom->loadHTML($html);
+    libxml_clear_errors();
+
+    $xpath = new DOMXPath($dom);
+
+    $nodes = $xpath->query('//title');
+    $pageTitle = $nodes->item(0)->nodeValue;
+
+    // Returns null if the theme page doesen't exist in worpdress directory
+    if (strpos($pageTitle, "Page not found") !== false) {
         return null;
     }
 
-    preg_match('/<h2 class="theme-name entry-title">(.*?)<\/h2>/', $directoryContent, $matches);
-    $title = $matches[1] ?? $themeTitle;
+    $nodes = $xpath->query('//div[@class="screenshot"]/picture/source');
+    if ($nodes->length > 0) {
+        $srcset = $nodes->item(0)->getAttribute('srcset');
+        $urls = explode(',', $srcset);
+        $urlParts = parse_url(trim($urls[0]));
+        $screenshot = $urlParts['scheme'] . '://' . $urlParts['host'] . $urlParts['path'];
+    } else {
+        $screenshot = "/no-theme-image.svg";
+    }
 
-    preg_match('/<p class="theme_homepage"><a href="(.*?)">Theme Homepage<\/a><\/p>/', $directoryContent, $matches);
-    $website = $matches[1] ?? null;
+    $nodes = $xpath->query('//h1[@class="theme-name entry-title"]');
+    $title = $nodes->item(0)->nodeValue;
 
-    $sanatizedWebsite = str_replace(['http://', 'https://'], '', $website);
+    $nodes = $xpath->query('//p[@class="version"]/strong');
+    $version = $nodes->item(0)->nodeValue;
 
-    preg_match('/<div class="theme-author">By <a href="\/themes\/author\/.*?\/"><span class="author">(.*?)<\/span><\/a><\/div>/', $directoryContent, $matches);
-    $author = $matches[1] ?? "No author found";
+    $nodes = $xpath->query('//span[@class="author"]');
+    $author = $nodes->item(0)->nodeValue;
 
-    preg_match('/<p class="version">Version: <strong>(.*?)<\/strong><\/p>/', $directoryContent, $matches);
-    $version = $matches[1] ?? null;
+    $nodes = $xpath->query('//p[@class="requires"]/strong');
+    $reqWpVersion = $nodes->item(0)->nodeValue;
 
-    preg_match('/<p class="updated">Last updated: <strong>(.*?)<\/strong><\/p>/', $directoryContent, $matches);
-    $lastUpdated = $matches[1] ?? null;
+    $nodes = $xpath->query('//p[@class="updated"]/strong');
+    $lastUpdated = $nodes->item(0)->nodeValue;
 
-    preg_match('/<p class="active_installs">Active Installations: <strong>(.*?)<\/strong><\/p>/', $directoryContent, $matches);
-    $activeInstallations = $matches[1] ?? null;
+    $nodes = $xpath->query('//p[@class="active_installs"]/strong');
+    $activeInstallations = $nodes->item(0)->nodeValue;
 
-    preg_match('/<p class="requires">WordPress Version: <strong>(.*?) or higher<\/strong><\/p>/', $directoryContent, $matches);
-    $reqWpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
+    $nodes = $xpath->query('//p[@class="requires_php"]/strong');
+    $reqPhpVersion = $nodes->item(0)->nodeValue;
 
-    preg_match('/<p class="requires_php">PHP Version: <strong>(.*?) or higher<\/strong><\/p>/', $directoryContent, $matches);
-    $reqPhpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
+    $nodes = $xpath->query('//div[@class="theme-description entry-summary"]/p');
+    $description = $nodes->item(0)->nodeValue;
 
-    preg_match('/<div class="theme-description entry-summary"><p>(.*?)<\/p><\/div>/', $directoryContent, $matches);
-    $description = trim($matches[1] ?? "No description provided");
+    $nodes = $xpath->query('//p[@class="theme_homapge"]/a');
 
-    preg_match('/<img src="(.*?)" srcset/', $directoryContent, $matches);
-    $screenshot = $matches[1] ?? "";
+    $websiteUrl = $nodes->item(0)->getAttribute('href');
+    if ($nodes->length > 0) {
+        $parsedUrl = parse_url($websiteUrl);
+    } else {
+        $parsedUrl = null;
+    }
+
+    $website = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
+    $sanatizedWebsite = $parsedUrl['host'];
 
     $theme = [
         'screenshot' => $screenshot,
@@ -145,7 +171,7 @@ function find_theme_info_in_directory($themeSlug)
         'testedWpVersion' => null,
         'reqPhpVersion' => $reqPhpVersion,
         'description' => $description,
-        'link' => $directoryUrl,
+        'link' => $url,
     ];
 
     return $theme;
