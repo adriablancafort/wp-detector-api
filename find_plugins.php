@@ -107,7 +107,7 @@ function find_plugin_info_in_directory($pluginsSlug)
     $title = $matches[1] ?? null;
 
     preg_match('/<span class="byline">By <span class="author vcard"><a class="url fn n" rel="nofollow" href=".*?">(.*?)<\/a><\/span><\/span>/', $readmeTxtContent, $matches);
-    $author = $matches[1] ?? "No contributors found";
+    $contributors = $matches[1] ?? "No contributors found";
 
     preg_match('/<li>\s*Version: <strong>(.*?)<\/strong>\s*<\/li>/', $readmeTxtContent, $matches);
     $version = $matches[1] ?? null;
@@ -145,7 +145,7 @@ function find_plugin_info_in_directory($pluginsSlug)
         'banner' => $banner,
         'icon' => $icon,
         'title' => $title,
-        'contributors' => $author,
+        'contributors' => $contributors,
         'version' => $version,
         'website' => $website,
         'sanatizedWebsite' => $sanatizedWebsite,
@@ -178,7 +178,7 @@ function find_plugin_info_in_website($pluginSlug, $pluginPath)
     $title = $matches[1] ?? $pluginTitle;
 
     preg_match('/Contributors: (.*)/', $readmeTxtContent, $matches);
-    $author = $matches[1] ?? "No contributors found";
+    $contributors = $matches[1] ?? "No contributors found";
 
     preg_match('/Stable tag: (.*)/', $readmeTxtContent, $matches);
     $version = $matches[1] ?? null;
@@ -207,7 +207,7 @@ function find_plugin_info_in_website($pluginSlug, $pluginPath)
         'banner' => $banner,
         'icon' => $icon,
         'title' => $title,
-        'contributors' => $author,
+        'contributors' => $contributors,
         'version' => $version,
         'website' => $website,
         'sanatizedWebsite' => $sanatizedWebsite,
