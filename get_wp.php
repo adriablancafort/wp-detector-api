@@ -18,7 +18,7 @@ function get_wp($url)
         require_once 'find_wp.php';
         $html = get_content($url);
         $links = find_links($html);
-        $wp = find_wp($links);
+        $wp = find_wp($links, $url);
 
         // Write the result in the column wp in the table websites for the website $url
         $wpbool = $wp ? '1' : '0';
