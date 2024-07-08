@@ -56,7 +56,7 @@ function get_top_themes($quantity, $page)
     $quantity = filter_var($quantity, FILTER_VALIDATE_INT);
 
     if ($quantity === false) {
-        $quantity = 5;
+        $quantity = 3;
     }
 
     // Calculate the offset
