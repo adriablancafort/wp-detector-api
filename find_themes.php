@@ -204,15 +204,16 @@ function find_theme_info_in_website($themeSlug, $themePath, )
     $title = $matches[1] ?? $themeTitle;
 
     preg_match('/Theme URI: (.*)/', $styleCssContent, $matches);
-    
+
     if (empty($matches[1])) {
         $websiteUrl = $themePath; // Return the url of the analyzed website
     } else {
         $websiteUrl = $matches[1];
     }
 
-    $sanatizedWebsite = $websiteUrl['host'] ?? null;
-    $website = $sanatizedWebsite ? $websiteUrl['scheme'] . '://' . $sanatizedWebsite : null;
+    $parsedUrl = parse_url($websiteUrl);
+    $sanatizedWebsite = $parsedUrl['host'] ?? null;
+    $website = $sanatizedWebsite ? $parsedUrl['scheme'] . '://' . $sanatizedWebsite : null;
 
     preg_match('/Author: (.*)/', $styleCssContent, $matches);
     $author = $matches[1] ?? "No author found";
