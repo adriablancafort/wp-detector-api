@@ -105,7 +105,7 @@ function find_theme_info_in_directory($themeSlug)
     $pageTitle = $nodes->item(0)->nodeValue;
 
     // Returns null if the theme page doesen't exist in worpdress directory
-    if (strpos($pageTitle, "Page not found") !== false) {
+    if (strpos($pageTitle, "This page") !== false) {
         return null;
     }
 
