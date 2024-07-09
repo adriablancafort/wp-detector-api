@@ -17,7 +17,7 @@ function find_themes($links)
             // Parse the URL to get the scheme and host
             $parsedUrl = parse_url($link);
             $rootDomain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
-            $themePath = $rootDomain . '/wp-content/themes/' . $themeSlug;
+            $themePath = $rootDomain . '/wp-content/themes/' . $themeSlug; // Todo: search wp content in other paths. Example: example.com/w/wp-content/
 
             if (!array_key_exists($themeSlug, $themes) && preg_match('/^[a-z\-]+$/', $themeSlug)) {
                 $themeInfo = get_theme_info($db, $themeSlug, $themePath);
@@ -97,12 +97,9 @@ function find_theme_info_in_directory($themeSlug)
     $url = "https://wordpress.org/themes/" . $themeSlug;
     $html = get_content($url);
 
-    $dom = new DOMDocument;
-    libxml_use_internal_errors(true);
-    $dom->loadHTML($html);
-    libxml_clear_errors();
-
-    $xpath = new DOMXPath($dom);
+    $doc = new DOMDocument();
+    @$doc->loadHTML($html);
+    $xpath = new DOMXPath($doc);
 
     $nodes = $xpath->query('//title');
     $pageTitle = $nodes->item(0)->nodeValue;
@@ -112,51 +109,45 @@ function find_theme_info_in_directory($themeSlug)
         return null;
     }
 
-    $nodes = $xpath->query('//div[@class="screenshot"]/picture/source');
+    $nodes = $xpath->query('//figure[@class="wp-block-post-featured-image"]/img');
+    $screenshot = $nodes->length > 0 ? $nodes->item(0)->getAttribute('src') : "/no-theme-image.svg"; // Return no-theme-image if screenshot is not found.
+
+    $nodes = $xpath->query('//h1');
     if ($nodes->length > 0) {
-        $srcset = $nodes->item(0)->getAttribute('srcset');
-        $urls = explode(',', $srcset);
-        $urlParts = parse_url(trim($urls[0]));
-        $screenshot = $urlParts['scheme'] . '://' . $urlParts['host'] . $urlParts['path'];
+        $title = $nodes->item(0)->nodeValue;
     } else {
-        $screenshot = "/no-theme-image.svg";
-    }
+        // Format the title from the slug
+        $words = explode('-', $themeSlug);
+        $words = array_map('ucfirst', $words);
+        $title = implode(' ', $words);
+    };
 
-    $nodes = $xpath->query('//h1[@class="theme-name entry-title"]');
-    $title = $nodes->item(0)->nodeValue;
+    $nodes = $xpath->query('//a[@class="wp-block-post-author-name__link"]');
+    $author = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
-    $nodes = $xpath->query('//p[@class="version"]/strong');
-    $version = $nodes->item(0)->nodeValue;
+    $nodes = $xpath->query('//li[@class="is-meta-version"]/span[2]');
+    $version = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
-    $nodes = $xpath->query('//span[@class="author"]');
-    $author = $nodes->item(0)->nodeValue;
+    $nodes = $xpath->query('//li[@class="is-meta-last-updated"]/span[2]');
+    $lastUpdated = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
-    $nodes = $xpath->query('//p[@class="requires"]/strong');
-    $reqWpVersion = $nodes->item(0)->nodeValue;
+    $nodes = $xpath->query('//li[@class="is-meta-active-installs"]/span[2]');
+    $activeInstallations = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
-    $nodes = $xpath->query('//p[@class="updated"]/strong');
-    $lastUpdated = $nodes->item(0)->nodeValue;
+    $nodes = $xpath->query('//li[@class="is-meta-requires-wp"]/span[2]');
+    $reqWpVersion = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
-    $nodes = $xpath->query('//p[@class="active_installs"]/strong');
-    $activeInstallations = $nodes->item(0)->nodeValue;
+    $nodes = $xpath->query('//li[@class="is-meta-requires-php"]/span[2]');
+    $reqPhpVersion = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
-    $nodes = $xpath->query('//p[@class="requires_php"]/strong');
-    $reqPhpVersion = $nodes->item(0)->nodeValue;
+    $nodes = $xpath->query('//li[@class="is-meta-theme-link"]/a');
+    $website = $nodes->length > 0 ? $nodes->item(0)->getAttribute('href') : null;
 
-    $nodes = $xpath->query('//div[@class="theme-description entry-summary"]/p');
-    $description = $nodes->item(0)->nodeValue;
+    $sanatizedWebsite = str_replace(['http://', 'https://'], '', $website);
 
-    $nodes = $xpath->query('//p[@class="theme_homapge"]/a');
-
-    $websiteUrl = $nodes->item(0)->getAttribute('href');
-    if ($nodes->length > 0) {
-        $parsedUrl = parse_url($websiteUrl);
-    } else {
-        $parsedUrl = null;
-    }
-
-    $website = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
-    $sanatizedWebsite = $parsedUrl['host'];
+    $nodes = $xpath->query('//div[contains(@class, "entry-content") and contains(@class, "wp-block-post-content")]//p');
+    $description = $nodes->length > 0 ? $nodes->item(0)->nodeValue : "No description provided";
+    $description = substr($description, 0, 1000); // Limit the description to 1000 characters
 
     $theme = [
         'screenshot' => $screenshot,
