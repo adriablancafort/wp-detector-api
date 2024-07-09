@@ -3,9 +3,17 @@
 require_once 'database_connection.php';
 
 // Returns all the themes of the given url
-function find_themes($links)
+function find_themes($links, $url)
 {
     $themes = [];
+
+    /*
+    $parsedUrl = parse_url($url);
+    $host = $parsedUrl['host'];
+    if (preg_match('/(?:www\.)?(.*?)\.\w+$/', $host, $matches)) { 
+        $themes[] = $matches[1]; // Add "example" for www.example.com in the themes slugs array
+    };
+    */
 
     $db = new Database();
     $db->connect();
@@ -44,9 +52,9 @@ function get_theme_info($db, $themeSlug, $themePath)
         if (empty($themeInfo)) {
             $themeInfo = find_theme_info_in_website($themeSlug, $themePath);
         }
-        //if (empty($themeInfo)) {
-        //    return null;
-        //}
+        if (empty($themeInfo)) {
+            return null;
+        }
 
         $screenshot = $themeInfo['screenshot'];
         $title = $themeInfo['title'];
@@ -96,6 +104,11 @@ function find_theme_info_in_directory($themeSlug)
 
     $url = "https://wordpress.org/themes/" . $themeSlug;
     $html = get_content($url);
+
+    // Return if the page didn't return content
+    if ($html === null) {
+        return null;
+    }
 
     $doc = new DOMDocument();
     @$doc->loadHTML($html);
@@ -169,11 +182,17 @@ function find_theme_info_in_directory($themeSlug)
 }
 
 // Returns the theme information in the website given a theme path
-function find_theme_info_in_website($themeSlug, $themePath)
+function find_theme_info_in_website($themeSlug, $themePath, )
 {
     require_once 'get_content.php';
+
     $styleCssUrl =  $themePath . '/style.css';
     $styleCssContent = get_content($styleCssUrl);
+
+    // Every wordpress theme must have a style.css
+    if ($styleCssContent === null) {
+        return null;
+    }
 
     preg_match('/Theme Name: (.*)/', $styleCssContent, $matches);
     if (!isset($matches[1])) {
@@ -185,9 +204,15 @@ function find_theme_info_in_website($themeSlug, $themePath)
     $title = $matches[1] ?? $themeTitle;
 
     preg_match('/Theme URI: (.*)/', $styleCssContent, $matches);
-    $website = $matches[1] ?? null;
+    
+    if (empty($matches[1])) {
+        $websiteUrl = $themePath; // Return the url of the analyzed website
+    } else {
+        $websiteUrl = $matches[1];
+    }
 
-    $sanatizedWebsite = str_replace(['http://', 'https://'], '', $website);
+    $sanatizedWebsite = $websiteUrl['host'] ?? null;
+    $website = $sanatizedWebsite ? $websiteUrl['scheme'] . '://' . $sanatizedWebsite : null;
 
     preg_match('/Author: (.*)/', $styleCssContent, $matches);
     $author = $matches[1] ?? "No author found";
@@ -204,7 +229,7 @@ function find_theme_info_in_website($themeSlug, $themePath)
     preg_match('/Requires PHP: (.*)/', $styleCssContent, $matches);
     $reqPhpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
 
-    preg_match('/Description: (.*)Version:/', $styleCssContent, $matches);
+    preg_match('/Description: (.*)/', $styleCssContent, $matches);
     $description = trim($matches[1] ?? "No description provided");
 
     $screenshot = get_theme_screenshot_in_website($themePath);
