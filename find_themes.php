@@ -105,7 +105,7 @@ function find_theme_info_in_directory($themeSlug)
     $pageTitle = $nodes->item(0)->nodeValue;
 
     // Returns null if the theme page doesen't exist in worpdress directory
-    if (strpos($pageTitle, "This page") !== false) {
+    if (strpos($pageTitle, "All themes") !== false) {
         return null;
     }
 
@@ -250,3 +250,4 @@ function get_theme_screenshot_in_website($themePath)
 
     return '/no-theme-screenshot.svg';
 }
+?>

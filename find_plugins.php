@@ -65,7 +65,6 @@ function get_plugin_info($db, $pluginSlug, $pluginPath)
 
         // Insert the plugin info into the database
         $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$pluginSlug', '$banner', '$icon', '$title', '$contributors', '$version', '$website', '$sanatizedWebsite', '$lastUpdated', '$activeInstallations', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link',  1, NOW())");
-    
     } else {
         $pluginInfo = [
             'banner' => $row['banner'],
@@ -112,7 +111,7 @@ function find_plugin_info_in_directory($pluginSlug)
     $pageTitle = $nodes->item(0)->nodeValue;
 
     // Returns null if the theme page doesen't exist in worpdress directory
-    if (strpos($pageTitle, "Page not found") !== false) {
+    if (strpos($pageTitle, "Search Results") !== false) {
         return null;
     }
 
