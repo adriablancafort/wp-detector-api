@@ -10,7 +10,7 @@ require_once 'get_plugins.php';
 $type = $_GET['type'];
 
 if ($type === 'wp') {
-    $url = $_GET['url'];
+    $url = $_GET['url']; // Store multiple pages of the same website as a single website in the database. Analyze multiple pages of the same website for every query?
     $wp = get_wp($url);    
     echo json_encode(['wp' => $wp]);    
 
