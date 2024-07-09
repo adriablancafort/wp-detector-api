@@ -44,9 +44,9 @@ function get_plugin_info($db, $pluginSlug, $pluginPath)
         if (empty($pluginInfo)) {
             $pluginInfo = find_plugin_info_in_website($pluginSlug, $pluginPath);
         }
-        //if (empty($pluginInfo)) {
-        //    return null;
-        //}
+        if (empty($pluginInfo)) {
+            return null;
+        }
 
         $banner = $pluginInfo['banner'];
         $icon = $pluginInfo['icon'];
@@ -158,10 +158,10 @@ function find_plugin_info_in_directory($pluginSlug)
     $reqPhpVersion = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
     $nodes = $xpath->query('//span[@class="author vcard"]/a/@href');
-    $rawUrl = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
-    $parsedUrl = parse_url($rawUrl);
+    $websiteUrl = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
+    $parsedUrl = parse_url($websiteUrl);
     $sanatizedWebsite = $parsedUrl['host'] ?? null;
-    $website = $sanatizedWebsite ? "https://" . $sanatizedWebsite : null;
+    $website = $sanatizedWebsite ? $parsedUrl['scheme'] . '://' . $sanatizedWebsite : null;
 
     $descriptionNodes = $xpath->query('//div[@id="tab-description"]/*[not(self::h2)]//text()');
     $description = '';
@@ -195,8 +195,14 @@ function find_plugin_info_in_directory($pluginSlug)
 function find_plugin_info_in_website($pluginSlug, $pluginPath)
 {
     require_once 'get_content.php';
+
     $readmeTxtUrl =  $pluginPath . '/readme.txt';
     $readmeTxtContent = get_content($readmeTxtUrl);
+
+    // Return if there is no readme ?
+    if ($readmeTxtContent === null) {
+        return null;
+    }
 
     preg_match('/=== (.*) ===/', $readmeTxtContent, $matches);
     if (!isset($matches[1])) {
@@ -214,9 +220,17 @@ function find_plugin_info_in_website($pluginSlug, $pluginPath)
     $version = $matches[1] ?? null;
 
     preg_match('/Donate link: (.*)/', $readmeTxtContent, $matches);
-    $website = $matches[1] ?? null;
 
-    $sanatizedWebsite = str_replace(['http://', 'https://'], '', $website);
+    // The donate link exists and is not PayPal
+    if ($matches[1] && strpos($matches[1], 'paypal') === false) {
+        $websiteUrl = $matches[1];
+    } else {
+        $websiteUrl = null;
+    }
+
+    $parsedUrl = parse_url($websiteUrl);
+    $sanatizedWebsite = $parsedUrl['host'];
+    $website = $parsedUrl['scheme'] . '://' . $sanatizedWebsite;
 
     preg_match('/Requires at least: (.*)/', $readmeTxtContent, $matches);
     $reqWpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
@@ -227,7 +241,7 @@ function find_plugin_info_in_website($pluginSlug, $pluginPath)
     preg_match('/Requires PHP: (.*)/', $readmeTxtContent, $matches);
     $reqPhpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
 
-    preg_match('/== Description ==\n\n(.*)/', $readmeTxtContent, $matches);
+    preg_match('/== Description ==\n\n(.*?)\n==/s', $readmeTxtContent, $matches); // Description until the next "=="
     $description = $matches[1] ?? 'No description provided';
 
     $banner = '/no-plugin-banner.svg';
