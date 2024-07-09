@@ -17,7 +17,7 @@ function find_plugins($links)
             // Parse the URL to get the scheme and host
             $parsedUrl = parse_url($link);
             $rootDomain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
-            $pluginPath = $rootDomain . '/wp-content/plugins/' . $pluginSlug;
+            $pluginPath = $rootDomain . '/wp-content/plugins/' . $pluginSlug; // Todo: search wp content in other paths. Example: example.com/w/wp-content/
 
             if (!array_key_exists($pluginSlug, $plugins) && preg_match('/^[a-z\-]+$/', $pluginSlug)) {
                 $pluginInfo = get_plugin_info($db, $pluginSlug, $pluginPath);
@@ -40,14 +40,13 @@ function get_plugin_info($db, $pluginSlug, $pluginPath)
     $row = $result->fetch_assoc();
 
     if (empty($row)) {
-        //$pluginInfo = find_plugin_info_in_directory($pluginSlug);
-        //if (empty($pluginInfo)) {
-        $pluginInfo = find_plugin_info_in_website($pluginSlug, $pluginPath);
-        //}
+        $pluginInfo = find_plugin_info_in_directory($pluginSlug);
+        if (empty($pluginInfo)) {
+            $pluginInfo = find_plugin_info_in_website($pluginSlug, $pluginPath);
+        }
         //if (empty($pluginInfo)) {
         //    return null;
         //}
-
 
         $banner = $pluginInfo['banner'];
         $icon = $pluginInfo['icon'];
@@ -93,53 +92,85 @@ function get_plugin_info($db, $pluginSlug, $pluginPath)
 }
 
 // Returns the plugin information in the wordpress directory given a plugin slug
-function find_plugin_info_in_directory($pluginsSlug)
+function find_plugin_info_in_directory($pluginSlug)
 {
     require_once 'get_content.php';
-    $directoryUrl = 'https://wordpress.org/plugins/' . $pluginsSlug;
-    $directoryContent = get_content($directoryUrl);
 
-    if (empty($directoryContent)) {
+    $url = "https://wordpress.org/plugins/" . $pluginSlug;
+    $html = get_content($url);
+
+    // Return if the page didn't return content
+    if ($html === null) {
         return null;
     }
 
-    preg_match('/<h1 class="plugin-title">(.*?)<\/h1>/', $directoryContent, $matches);
-    $title = $matches[1] ?? null;
+    $doc = new DOMDocument();
+    @$doc->loadHTML($html);
+    $xpath = new DOMXPath($doc);
 
-    preg_match('/<span class="byline">By <span class="author vcard"><a class="url fn n" rel="nofollow" href=".*?">(.*?)<\/a><\/span><\/span>/', $readmeTxtContent, $matches);
-    $contributors = $matches[1] ?? "No contributors found";
+    $nodes = $xpath->query('//title');
+    $pageTitle = $nodes->item(0)->nodeValue;
 
-    preg_match('/<li>\s*Version: <strong>(.*?)<\/strong>\s*<\/li>/', $readmeTxtContent, $matches);
-    $version = $matches[1] ?? null;
+    // Returns null if the theme page doesen't exist in worpdress directory
+    if (strpos($pageTitle, "Page not found") !== false) {
+        return null;
+    }
 
-    preg_match('/<li>\s*Last updated: <strong><span>(.*?)<\/span><\/strong>\s*<\/li>/', $directoryContent, $matches);
-    $lastUpdated = $matches[1] ?? null;
+    $nodes = $xpath->query('//div[@class="plugin-banner"]/img/@src');
+    $banner = $nodes->length > 0 ? $nodes->item(0)->nodeValue : '/no-plugin-banner.svg';
 
-    preg_match('/<li>\s*Active installations: <strong>(.*?)<\/strong>\s*<\/li>/', $directoryContent, $matches);
-    $activeInstallations = $matches[1] ?? null;
+    $nodes = $xpath->query('//div[@class="entry-thumbnail"]/img[@class="plugin-icon"]/@src');
+    $icon = $nodes->length > 0 ? $nodes->item(0)->nodeValue : '/no-plugin-icon.svg';
 
-    preg_match('/<a href="(.*?)" rel="nofollow">Support<\/a>/', $readmeTxtContent, $matches);
-    $website = $matches[1] ?? null;
+    $nodes = $xpath->query('//h1[@class="plugin-title"]');
+    if ($nodes->length > 0) {
+        $title = $nodes->item(0)->nodeValue;
+    } else {
+        // Format the title from the slug
+        $words = explode('-', $pluginSlug);
+        $words = array_map('ucfirst', $words);
+        $title = implode(' ', $words);
+    };
 
-    $sanatizedWebsite = str_replace(['http://', 'https://'], '', $website);
+    $nodes = $xpath->query('//ul[@id="contributors-list"]/li/a');
+    $contributorsList = [];
+    foreach ($nodes as $node) {
+        $contributorName = trim($node->nodeValue);
+        $contributorsList[$contributorName] = $contributorName; // Use the name as the key to prevent duplicates
+    }
+    $contributors = implode(', ', $contributorsList); // Transform to comma separated string
 
-    preg_match('/<li>\s*WordPress Version:\s*<strong>\s*(.*?) or higher\s*<\/strong>\s*<\/li>/', $readmeTxtContent, $matches);
-    $reqWpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
+    $nodes = $xpath->query('//li[contains(text(), "Version")]/strong');
+    $version = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
-    preg_match('/<li>\s*Tested up to: <strong>(.*?)<\/strong>\s*<\/li>/', $readmeTxtContent, $matches);
-    $testedWpVersion = $matches[1] ?? null;
+    $nodes = $xpath->query('//li[contains(text(), "Last updated")]/strong/span');
+    $lastUpdated = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
-    preg_match('/<li>\s*PHP Version:\s*<strong>\s*(.*?) or higher\s*<\/strong>\s*<\/li>/', $readmeTxtContent, $matches);
-    $reqPhpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
+    $nodes = $xpath->query('//li[contains(text(), "Active installations")]/strong');
+    $activeInstallations = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
-    preg_match('/== Description ==\n\n(.*)/', $readmeTxtContent, $matches);
-    $description = $matches[1] ?? 'No description provided';
+    $nodes = $xpath->query('//li[contains(text(), "WordPress version")]/strong');
+    $reqWpVersion = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
-    preg_match('/<img class="plugin-icon" src="(.*?)">/', $directoryContent, $matches);
-    $icon = $matches[1] ?? '/no-plugin-icon.svg';
+    $nodes = $xpath->query('//li[contains(text(), "Tested up to")]/strong');
+    $testedWpVersion = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
-    preg_match("/background-image: url\('(.*?)'\);/", $directoryContent, $matches);
-    $banner = $matches[1] ?? '/no-plugin-banner.svg';
+    $nodes = $xpath->query('//li[contains(text(), "PHP version")]/strong');
+    $reqPhpVersion = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
+
+    $nodes = $xpath->query('//span[@class="author vcard"]/a/@href');
+    $rawUrl = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
+    $parsedUrl = parse_url($rawUrl);
+    $sanatizedWebsite = $parsedUrl['host'] ?? null;
+    $website = $sanatizedWebsite ? "https://" . $sanatizedWebsite : null;
+
+    $descriptionNodes = $xpath->query('//div[@id="tab-description"]/*[not(self::h2)]//text()');
+    $description = '';
+    foreach ($descriptionNodes as $node) {
+        $description .= trim($node->nodeValue) . ' ';
+    }
+    $description = trim($description); // Remove any leading/trailing whitespace
+    $description = substr($description, 0, 1000); // Limit the description to 1000 characters
 
     $plugin = [
         'banner' => $banner,
@@ -155,7 +186,7 @@ function find_plugin_info_in_directory($pluginsSlug)
         'testedWpVersion' => $testedWpVersion,
         'reqPhpVersion' => $reqPhpVersion,
         'description' => $description,
-        'link' => $directoryUrl,
+        'link' => $url,
     ];
 
     return $plugin;
