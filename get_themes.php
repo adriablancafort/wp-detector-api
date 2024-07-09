@@ -18,7 +18,7 @@ function get_themes($url)
         require_once 'find_links.php';
         $html = get_content($url);
         $links = find_links($html);
-        $themes = find_themes($links);
+        $themes = find_themes($links, $url);
         
         write_theme_slugs_to_database($db, $themes, $url);
 
