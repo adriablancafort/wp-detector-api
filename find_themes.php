@@ -182,7 +182,7 @@ function find_theme_info_in_directory($themeSlug)
 }
 
 // Returns the theme information in the website given a theme path
-function find_theme_info_in_website($themeSlug, $themePath, )
+function find_theme_info_in_website($themeSlug, $themePath)
 {
     require_once 'get_content.php';
 
