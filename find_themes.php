@@ -53,7 +53,7 @@ function get_theme_info($db, $themeSlug, $themePath)
             $themeInfo = find_theme_info_in_website($themeSlug, $themePath);
         }
         if (empty($themeInfo)) {
-            return null;
+            return ""; // Return an empty string, not null
         }
 
         $screenshot = $themeInfo['screenshot'];
