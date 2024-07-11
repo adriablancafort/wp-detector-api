@@ -22,6 +22,12 @@ function find_plugins($links)
             if (!array_key_exists($pluginSlug, $plugins) && preg_match('/^[a-z\-]+$/', $pluginSlug)) {
                 $pluginInfo = get_plugin_info($db, $pluginSlug, $pluginPath);
                 if (!empty($pluginInfo)) {
+                    // Overide null fields with the desired values
+                    $themeInfo['banner'] = $themeInfo['banner'] ?? "/no-plugin-banner.svg";
+                    $themeInfo['icon'] = $themeInfo['icon'] ?? "/no-plugin-icon.svg";
+                    $pluginInfo['description'] = $pluginInfo['description'] ?? "No description provided";
+                    $pluginInfo['contributors'] = $pluginInfo['author'] ?? "No contributors found";
+
                     $plugins[$pluginSlug] = $pluginInfo;
                 }
             }
@@ -45,26 +51,27 @@ function get_plugin_info($db, $pluginSlug, $pluginPath)
             $pluginInfo = find_plugin_info_in_website($pluginSlug, $pluginPath);
         }
         if (empty($pluginInfo)) {
-            return null;
+            return null; // False positive
         }
 
-        $banner = $pluginInfo['banner'];
-        $icon = $pluginInfo['icon'];
-        $title = $pluginInfo['title'];
-        $contributors = $pluginInfo['contributors'];
-        $version = $pluginInfo['version'];
-        $website = $pluginInfo['website'];
-        $sanatizedWebsite = $pluginInfo['sanatizedWebsite'];
-        $lastUpdated = $pluginInfo['lastUpdated'];
-        $activeInstallations = $pluginInfo['activeInstallations'];
-        $reqWpVersion = $pluginInfo['reqWpVersion'];
-        $testedWpVersion = $pluginInfo['testedWpVersion'];
-        $reqPhpVersion = $pluginInfo['reqPhpVersion'];
-        $description = $pluginInfo['description'];
-        $link = '';
+        $banner = isset($pluginInfo['banner']) ? "'" . $pluginInfo['banner'] . "'" : "NULL";
+        $icon = isset($pluginInfo['icon']) ? "'" . $pluginInfo['icon'] . "'" : "NULL";
+        $title = isset($pluginInfo['title']) ? "'" . $pluginInfo['title'] . "'" : "NULL";
+        $contributors = isset($pluginInfo['contributors']) ? "'" . $pluginInfo['contributors'] . "'" : "NULL";
+        $version = isset($pluginInfo['version']) ? "'" . $pluginInfo['version'] . "'" : "NULL";
+        $website = isset($pluginInfo['website']) ? "'" . $pluginInfo['website'] . "'" : "NULL";
+        $sanatizedWebsite = isset($pluginInfo['sanatizedWebsite']) ? "'" . $pluginInfo['sanatizedWebsite'] . "'" : "NULL";
+        $lastUpdated = isset($pluginInfo['lastUpdated']) ? "'" . $pluginInfo['lastUpdated'] . "'" : "NULL";
+        $activeInstallations = isset($pluginInfo['activeInstallations']) ? "'" . $pluginInfo['activeInstallations'] . "'" : "NULL";
+        $reqWpVersion = isset($pluginInfo['reqWpVersion']) ? "'" . $pluginInfo['reqWpVersion'] . "'" : "NULL";
+        $testedWpVersion = isset($pluginInfo['testedWpVersion']) ? "'" . $pluginInfo['testedWpVersion'] . "'" : "NULL";
+        $reqPhpVersion = isset($pluginInfo['reqPhpVersion']) ? "'" . $pluginInfo['reqPhpVersion'] . "'" : "NULL";
+        $description = isset($pluginInfo['description']) ? "'" . $pluginInfo['description'] . "'" : "NULL";
+        $link = isset($pluginInfo['link']) ? "'" . $pluginInfo['link'] . "'" : "NULL";
 
         // Insert the plugin info into the database
-        $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$pluginSlug', '$banner', '$icon', '$title', '$contributors', '$version', '$website', '$sanatizedWebsite', '$lastUpdated', '$activeInstallations', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link',  1, NOW())");
+        $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$pluginSlug', $banner, $icon, $title, $contributors, $version, $website, $sanatizedWebsite, $lastUpdated, $activeInstallations, $reqWpVersion, $testedWpVersion, $reqPhpVersion, $description, $link, 1, NOW())");
+
     } else {
         $pluginInfo = [
             'banner' => $row['banner'],
@@ -110,16 +117,16 @@ function find_plugin_info_in_directory($pluginSlug)
     $nodes = $xpath->query('//title');
     $pageTitle = $nodes->item(0)->nodeValue;
 
-    // Returns null if the theme page doesen't exist in worpdress directory
+    // Returns null if the theme page doesen't exist in worpdress directory (The title will be "Search Results ...")
     if (strpos($pageTitle, "Search Results") !== false) {
         return null;
     }
 
     $nodes = $xpath->query('//div[@class="plugin-banner"]/img/@src');
-    $banner = $nodes->length > 0 ? $nodes->item(0)->nodeValue : '/no-plugin-banner.svg';
+    $banner = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
     $nodes = $xpath->query('//div[@class="entry-thumbnail"]/img[@class="plugin-icon"]/@src');
-    $icon = $nodes->length > 0 ? $nodes->item(0)->nodeValue : '/no-plugin-icon.svg';
+    $icon = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
     $nodes = $xpath->query('//h1[@class="plugin-title"]');
     if ($nodes->length > 0) {
@@ -157,19 +164,29 @@ function find_plugin_info_in_directory($pluginSlug)
     $nodes = $xpath->query('//li[contains(text(), "PHP version")]/strong');
     $reqPhpVersion = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
-    $nodes = $xpath->query('//span[@class="author vcard"]/a/@href');
-    $websiteUrl = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
-    $parsedUrl = parse_url($websiteUrl);
-    $sanatizedWebsite = $parsedUrl['host'] ?? null;
-    $website = $sanatizedWebsite ? $parsedUrl['scheme'] . '://' . $sanatizedWebsite : null;
+    $website = null;
+    $sanatizedWebsite = null;
 
-    $descriptionNodes = $xpath->query('//div[@id="tab-description"]/*[not(self::h2)]//text()');
-    $description = '';
-    foreach ($descriptionNodes as $node) {
-        $description .= trim($node->nodeValue) . ' ';
+    $nodes = $xpath->query('//span[@class="author vcard"]/a/@href');
+
+    // If a website is found, sanatize it
+    if ($nodes->length > 0) {
+        $websiteUrl = $nodes->item(0)->nodeValue;
+        $parsedUrl = parse_url($websiteUrl);
+        $sanatizedWebsite = $parsedUrl['host'] ?? null;
+        $website = $sanatizedWebsite ? $parsedUrl['scheme'] . '://' . $sanatizedWebsite : null;
     }
-    $description = trim($description); // Remove any leading/trailing whitespace
-    $description = substr($description, 0, 1000); // Limit the description to 1000 characters
+
+    $nodes = $xpath->query('//div[@id="tab-description"]/*[not(self::h2)]//text()');
+    $description = null;
+    if ($nodes->length > 0) { // Check if there are any nodes
+        $description = '';
+        foreach ($nodes as $node) {
+            $description .= trim($node->nodeValue) . ' ';
+        }
+        $description = trim($description); // Remove any leading/trailing whitespace
+        $description = substr($description, 0, 800); // Limit the description to 800 characters
+    }
 
     $plugin = [
         'banner' => $banner,
@@ -205,51 +222,51 @@ function find_plugin_info_in_website($pluginSlug, $pluginPath)
     }
 
     preg_match('/=== (.*) ===/', $readmeTxtContent, $matches);
-    if (!isset($matches[1])) {
+    if (isset($matches[1])) {
+        $title = trim($matches[1]);
+    } else {
         // Convert "plugin-slug" to "Plugin Slug"
         $words = explode('-', $pluginSlug);
         $words = array_map('ucfirst', $words);
-        $pluginTitle = implode(' ', $words);
+        $title = implode(' ', $words);
     }
-    $title = $matches[1] ?? $pluginTitle;
 
     preg_match('/Contributors: (.*)/', $readmeTxtContent, $matches);
-    $contributors = $matches[1] ?? "No contributors found";
+    $contributors = isset($matches[1]) ? trim($matches[1]) : null;
 
     preg_match('/Stable tag: (.*)/', $readmeTxtContent, $matches);
-    $version = $matches[1] ?? null;
+    $version = isset($matches[1]) ? trim($matches[1]) : null;
 
     preg_match('/Donate link: (.*)/', $readmeTxtContent, $matches);
 
-    // The donate link exists and is not PayPal
-    if ($matches[1] && strpos($matches[1], 'paypal') === false) {
-        $websiteUrl = $matches[1];
-    } else {
-        $websiteUrl = null;
-    }
+    $website = null;
+    $sanatizedWebsite = null;
 
-    $parsedUrl = parse_url($websiteUrl);
-    $sanatizedWebsite = $parsedUrl['host'];
-    $website = $parsedUrl['scheme'] . '://' . $sanatizedWebsite;
+    if (!empty($matches[1])) {
+        // The donate link exists and is not PayPal
+        if (strpos($matches[1], 'paypal') === false) {
+            $parsedUrl = parse_url($matches[1]);
+            $sanatizedWebsite = $parsedUrl['host'] ?? null;
+            $website = $sanatizedWebsite ? $parsedUrl['scheme'] . '://' . $sanatizedWebsite : null;
+        }
+    }
 
     preg_match('/Requires at least: (.*)/', $readmeTxtContent, $matches);
     $reqWpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
 
     preg_match('/Tested up to: (.*)/', $readmeTxtContent, $matches);
-    $testedWpVersion = $matches[1] ?? null;
+    $testedWpVersion = isset($matches[1]) ? trim($matches[1]) : null;
 
     preg_match('/Requires PHP: (.*)/', $readmeTxtContent, $matches);
     $reqPhpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
 
     preg_match('/== Description ==\n\n(.*?)\n==/s', $readmeTxtContent, $matches); // Description until the next "=="
-    $description = $matches[1] ?? 'No description provided';
-
-    $banner = '/no-plugin-banner.svg';
-    $icon = '/no-plugin-icon.svg';
+    $description = $matches[1] ?? null;
+    $description = substr($description, 0, 800); // Limit the description to 800 characters
 
     $plugin = [
-        'banner' => $banner,
-        'icon' => $icon,
+        'banner' => null,
+        'icon' => null,
         'title' => $title,
         'contributors' => $contributors,
         'version' => $version,
@@ -266,4 +283,3 @@ function find_plugin_info_in_website($pluginSlug, $pluginPath)
 
     return $plugin;
 }
-?>
