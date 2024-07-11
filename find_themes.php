@@ -122,7 +122,7 @@ function find_theme_info_in_directory($themeSlug)
     $html = get_content($url);
 
     // Return if the page didn't return content
-    if ($html === null) {
+    if (empty($html)) {
         return null;
     }
 
@@ -214,7 +214,7 @@ function find_theme_info_in_website($themeSlug, $themePath)
     $styleCssContent = get_content($styleCssUrl);
 
     // Every wordpress theme must have a style.css
-    if ($styleCssContent === null) {
+    if (empty($styleCssContent)) {
         return null;
     }
 
