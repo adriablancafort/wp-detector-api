@@ -22,7 +22,7 @@ function get_plugins($url)
         $plugins = find_plugins($links);
 
         write_plugin_slugs_to_database($db, $plugins, $url);
-      
+
     } else {
         // Split the string of plugin slugs into an array
         $pluginSlugs = explode(',', $row['plugins']);
@@ -30,6 +30,7 @@ function get_plugins($url)
         foreach ($pluginSlugs as $pluginSlug) {
             $pluginSlug = trim($pluginSlug);
             $pluginInfo = get_plugin_info($db, $pluginSlug, null);
+
             $plugins[$pluginSlug] = $pluginInfo;
         }
     }
