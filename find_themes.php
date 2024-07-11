@@ -12,8 +12,9 @@ function find_themes($links, $url)
     // Error: exist themes with the same name as domains of websites that don't use them
     $parsedUrl = parse_url($url);
     $host = $parsedUrl['host'];
-    if (preg_match('/(?:www\.)?(.*?)\.\w+$/', $host, $matches)) { 
-        $themes[] = $matches[1]; // Add "example" for www.example.com in the themes slugs array
+    $scheme = $parsedUrl['scheme'];
+    if (preg_match('/(?:www\.)?(.*?)\.\w+$/', $host, $matches)) {
+        $links[] = $scheme . "://" . $host . "/wp-content/themes/" . $matches[1];
     };
     */
 
@@ -21,6 +22,7 @@ function find_themes($links, $url)
     $db->connect();
 
     foreach ($links as $link) {
+
         if (preg_match('/.*\/themes\/([^\/]*)/', $link, $matches)) {
             $themeSlug = $matches[1];
 
@@ -29,9 +31,15 @@ function find_themes($links, $url)
             $rootDomain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
             $themePath = $rootDomain . '/wp-content/themes/' . $themeSlug; // Todo: search wp content in other paths. Example: example.com/w/wp-content/
 
-            if (!array_key_exists($themeSlug, $themes) && preg_match('/^[a-z\-]+$/', $themeSlug)) {
+            if (!array_key_exists($themeSlug, $themes) && preg_match('/^[a-z\-_]+$/', $themeSlug)) {
                 $themeInfo = get_theme_info($db, $themeSlug, $themePath);
+
                 if (!empty($themeInfo)) {
+                    // Overide null fields with the desired values
+                    $themeInfo['screenshot'] = $themeInfo['screenshot'] ?? "/no-theme-image.svg";
+                    $themeInfo['description'] = $themeInfo['description'] ?? "No description provided";
+                    $themeInfo['author'] = $themeInfo['author'] ?? "No author found";
+
                     $themes[$themeSlug] = $themeInfo;
                 }
             }
@@ -50,30 +58,33 @@ function get_theme_info($db, $themeSlug, $themePath)
     $row = $result->fetch_assoc();
 
     if (empty($row)) {
+
         $themeInfo = find_theme_info_in_directory($themeSlug);
+
         if (empty($themeInfo)) {
             $themeInfo = find_theme_info_in_website($themeSlug, $themePath);
         }
         if (empty($themeInfo)) {
-            return ""; // Return an empty string, not null
+            return null; // False positive
         }
 
-        $screenshot = $themeInfo['screenshot'];
-        $title = $themeInfo['title'];
-        $author = $themeInfo['author'];
-        $version = $themeInfo['version'];
-        $website = $themeInfo['website'];
-        $sanatizedWebsite = $themeInfo['sanatizedWebsite'];
-        $lastUpdated = $themeInfo['lastUpdated'];
-        $activeInstallations = $themeInfo['activeInstallations'];
-        $reqWpVersion = $themeInfo['reqWpVersion'];
-        $testedWpVersion = $themeInfo['testedWpVersion'];
-        $reqPhpVersion = $themeInfo['reqPhpVersion'];
-        $description = $themeInfo['description'];
-        $link = '';
-
+        // Replace with NULL if the value is null or transform into strings
+        $screenshot = isset($themeInfo['screenshot']) ? "'" . $themeInfo['screenshot'] . "'" : "NULL";
+        $title = isset($themeInfo['title']) ? "'" . $themeInfo['title'] . "'" : "NULL";
+        $author = isset($themeInfo['author']) ? "'" . $themeInfo['author'] . "'" : "NULL";
+        $version = isset($themeInfo['version']) ? "'" . $themeInfo['version'] . "'" : "NULL";
+        $website = isset($themeInfo['website']) ? "'" . $themeInfo['website'] . "'" : "NULL";
+        $sanatizedWebsite = isset($themeInfo['sanatizedWebsite']) ? "'" . $themeInfo['sanatizedWebsite'] . "'" : "NULL";
+        $lastUpdated = isset($themeInfo['lastUpdated']) ? "'" . $themeInfo['lastUpdated'] . "'" : "NULL";
+        $activeInstallations = isset($themeInfo['activeInstallations']) ? "'" . $themeInfo['activeInstallations'] . "'" : "NULL";
+        $reqWpVersion = isset($themeInfo['reqWpVersion']) ? "'" . $themeInfo['reqWpVersion'] . "'" : "NULL";
+        $testedWpVersion = isset($themeInfo['testedWpVersion']) ? "'" . $themeInfo['testedWpVersion'] . "'" : "NULL";
+        $reqPhpVersion = isset($themeInfo['reqPhpVersion']) ? "'" . $themeInfo['reqPhpVersion'] . "'" : "NULL";
+        $description = isset($themeInfo['description']) ? "'" . $themeInfo['description'] . "'" : "NULL";
+        $link = isset($themeInfo['link']) ? "'" . $themeInfo['link'] . "'" : "NULL";
+ 
         // Insert the theme info into the database
-        $db->query("INSERT INTO themes (slug, screenshot, title, author, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$themeSlug', '$screenshot', '$title', '$author', '$version', '$website', '$sanatizedWebsite', '$lastUpdated', '$activeInstallations', '$reqWpVersion', '$testedWpVersion', '$reqPhpVersion', '$description', '$link', 1, NOW())");
+        $db->query("INSERT INTO themes (slug, screenshot, title, author, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$themeSlug', $screenshot, $title, $author, $version, $website, $sanatizedWebsite, $lastUpdated, $activeInstallations, $reqWpVersion, $testedWpVersion, $reqPhpVersion, $description, $link, 1, NOW())");
 
     } else {
         $themeInfo = [
@@ -119,13 +130,13 @@ function find_theme_info_in_directory($themeSlug)
     $nodes = $xpath->query('//title');
     $pageTitle = $nodes->item(0)->nodeValue;
 
-    // Returns null if the theme page doesen't exist in worpdress directory
+    // Returns null if the theme page doesen't exist in worpdress directory (the title will be "All themes ...")
     if (strpos($pageTitle, "All themes") !== false) {
         return null;
     }
 
     $nodes = $xpath->query('//figure[@class="wp-block-post-featured-image"]/img');
-    $screenshot = $nodes->length > 0 ? $nodes->item(0)->getAttribute('src') : "/no-theme-image.svg"; // Return no-theme-image if screenshot is not found.
+    $screenshot = $nodes->length > 0 ? $nodes->item(0)->getAttribute('src') : null; 
 
     $nodes = $xpath->query('//h1');
     if ($nodes->length > 0) {
@@ -155,14 +166,22 @@ function find_theme_info_in_directory($themeSlug)
     $nodes = $xpath->query('//li[@class="is-meta-requires-php"]/span[2]');
     $reqPhpVersion = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
 
-    $nodes = $xpath->query('//li[@class="is-meta-theme-link"]/a');
-    $website = $nodes->length > 0 ? $nodes->item(0)->getAttribute('href') : null;
+    $website = null;
+    $sanatizedWebsite = null;
 
-    $sanatizedWebsite = str_replace(['http://', 'https://'], '', $website);
+    $nodes = $xpath->query('//li[@class="is-meta-theme-link"]/a');
+
+    // If a website is found, sanatize it
+    if ($nodes->length > 0) {
+        $websiteUrl = $nodes->item(0)->getAttribute('href');
+        $parsedUrl = parse_url($websiteUrl);
+        $sanatizedWebsite = $parsedUrl['host'] ?? null;
+        $website = $sanatizedWebsite ? $parsedUrl['scheme'] . '://' . $sanatizedWebsite : null;
+    }
 
     $nodes = $xpath->query('//div[contains(@class, "entry-content") and contains(@class, "wp-block-post-content")]//p');
-    $description = $nodes->length > 0 ? $nodes->item(0)->nodeValue : "No description provided";
-    $description = substr($description, 0, 1000); // Limit the description to 1000 characters
+    $description = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
+    $description = substr($description, 0, 800); // Limit the description to 800 characters
 
     $theme = [
         'screenshot' => $screenshot,
@@ -197,43 +216,43 @@ function find_theme_info_in_website($themeSlug, $themePath)
     }
 
     preg_match('/Theme Name: (.*)/', $styleCssContent, $matches);
-    if (!isset($matches[1])) {
+    if (isset($matches[1])) {
+        $title = trim($matches[1]);
+    } else {
         // Convert "plugin-slug" to "Plugin Slug"
         $words = explode('-', $themeSlug);
         $words = array_map('ucfirst', $words);
-        $themeTitle = implode(' ', $words);
+        $title = implode(' ', $words);
     }
-    $title = $matches[1] ?? $themeTitle;
 
     preg_match('/Theme URI: (.*)/', $styleCssContent, $matches);
-
-    if (empty($matches[1])) {
-        $websiteUrl = $themePath; // Return the url of the analyzed website
+    if (isset($matches[1])) {
+        $parsedUrl = parse_url($matches[1]);
+        $sanatizedWebsite = $parsedUrl['host'] ?? null;
+        $website = $sanatizedWebsite ? $parsedUrl['scheme'] . '://' . $sanatizedWebsite : null;
     } else {
-        $websiteUrl = $matches[1];
+        $website = null;
+        $sanatizedWebsite = null;
     }
 
-    $parsedUrl = parse_url($websiteUrl);
-    $sanatizedWebsite = $parsedUrl['host'] ?? null;
-    $website = $sanatizedWebsite ? $parsedUrl['scheme'] . '://' . $sanatizedWebsite : null;
-
     preg_match('/Author: (.*)/', $styleCssContent, $matches);
-    $author = $matches[1] ?? "No author found";
+    $author = isset($matches[1]) ? trim($matches[1]) : null;
 
     preg_match('/Version: (.*)/', $styleCssContent, $matches);
-    $version = $matches[1] ?? null;
+    $version = isset($matches[1]) ? trim($matches[1]) : null;
 
     preg_match('/Requires at least: (.*)/', $styleCssContent, $matches);
-    $reqWpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
+    $reqWpVersion = isset($matches[1]) ? trim($matches[1]) . ' or higher' : null;
 
     preg_match('/Tested up to: (.*)/', $styleCssContent, $matches);
-    $testedWpVersion = $matches[1] ?? null;
+    $testedWpVersion = isset($matches[1]) ? trim($matches[1]) : null;
 
     preg_match('/Requires PHP: (.*)/', $styleCssContent, $matches);
-    $reqPhpVersion = isset($matches[1]) ? $matches[1] . ' or higher' : null;
+    $reqPhpVersion = isset($matches[1]) ? trim($matches[1]) . ' or higher' : null;
 
     preg_match('/Description: (.*)/', $styleCssContent, $matches);
-    $description = trim($matches[1] ?? "No description provided");
+    $description = isset($matches[1]) ? trim($matches[1]) : null;
+    $description = substr($description, 0, 800); // Limit the description to 800 characters
 
     $screenshot = get_theme_screenshot_in_website($themePath);
 
@@ -276,6 +295,6 @@ function get_theme_screenshot_in_website($themePath)
         }
     }
 
-    return '/no-theme-screenshot.svg';
+    return null;
 }
 ?>
