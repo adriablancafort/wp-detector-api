@@ -3,7 +3,7 @@
 require_once 'database_connection.php';
 require_once 'find_themes.php';
 
-// Returns the plugins of a given url
+// Returns the themes of a given url
 function get_themes($url)
 {
     $db = new Database();
@@ -19,7 +19,7 @@ function get_themes($url)
         $html = get_content($url);
         $links = find_links($html);
         $themes = find_themes($links, $url);
-        
+
         write_theme_slugs_to_database($db, $themes, $url);
 
     } else {
@@ -29,6 +29,7 @@ function get_themes($url)
         foreach ($themeSlugs as $themeSlug) {
             $themeSlug = trim($themeSlug);
             $themeInfo = get_theme_info($db, $themeSlug, null);
+
             $themes[$themeSlug] = $themeInfo;
         }
     }
