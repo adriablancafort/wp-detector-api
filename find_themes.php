@@ -8,6 +8,8 @@ function find_themes($links, $url)
     $themes = [];
 
     /*
+    // Check the domain name as theme slug candidate
+    // Error: exist themes with the same name as domains of websites that don't use them
     $parsedUrl = parse_url($url);
     $host = $parsedUrl['host'];
     if (preg_match('/(?:www\.)?(.*?)\.\w+$/', $host, $matches)) { 
