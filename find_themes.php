@@ -26,12 +26,15 @@ function find_themes($links, $url)
         if (preg_match('/.*\/themes\/([^\/]*)/', $link, $matches)) {
             $themeSlug = $matches[1];
 
-            // Parse the URL to get the scheme and host
-            $parsedUrl = parse_url($link);
-            $rootDomain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
-            $themePath = $rootDomain . '/wp-content/themes/' . $themeSlug; // Todo: search wp content in other paths. Example: example.com/w/wp-content/
-
             if (!array_key_exists($themeSlug, $themes) && preg_match('/^[a-z\-_]+$/', $themeSlug)) {
+
+                // Calculate the root domain once
+                if (!isset($rootDomain)) {
+                    $parsedUrl = parse_url($link);
+                    $rootDomain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . '/wp-content/themes/'; // Todo: search wp content in other paths. Example: example.com/w/wp-content/
+                }
+
+                $themePath = $rootDomain . $themeSlug;
                 $themeInfo = get_theme_info($db, $themeSlug, $themePath);
 
                 if (!empty($themeInfo)) {
