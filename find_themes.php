@@ -222,10 +222,14 @@ function find_theme_info_in_website($themeSlug, $themePath)
     if (isset($matches[1])) {
         $title = trim($matches[1]);
     } else {
+        return null; // The title should exist
+
+        /*
         // Convert "plugin-slug" to "Plugin Slug"
         $words = explode('-', $themeSlug);
         $words = array_map('ucfirst', $words);
         $title = implode(' ', $words);
+        */
     }
 
     preg_match('/Theme URI: (.*)/', $styleCssContent, $matches);
