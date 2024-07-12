@@ -110,7 +110,7 @@ function get_plugin_info($db, $pluginSlug, $pluginPath, $checkPublicDirectory = 
     $pluginInfo['banner'] = $pluginInfo['banner'] ?? "/no-plugin-banner.svg";
     $pluginInfo['icon'] = $pluginInfo['icon'] ?? "/no-plugin-icon.svg";
     $pluginInfo['description'] = $pluginInfo['description'] ?? "No description provided";
-    $pluginInfo['contributors'] = $pluginInfo['author'] ?? "No contributors found";
+    $pluginInfo['contributors'] = $pluginInfo['contributors'] ?? "No contributors found";
 
     return $pluginInfo;
 }
