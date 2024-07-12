@@ -7,47 +7,37 @@ function find_themes($links, $url)
 {
     $themes = [];
 
-    /*
-    // Check the domain name as theme slug candidate
-    // Error: exist themes with the same name as domains of websites that don't use them
     $parsedUrl = parse_url($url);
-    $host = $parsedUrl['host'];
-    $scheme = $parsedUrl['scheme'];
-    if (preg_match('/(?:www\.)?(.*?)\.\w+$/', $host, $matches)) {
-        $links[] = $scheme . "://" . $host . "/wp-content/themes/" . $matches[1];
-    };
-    */
+    $rootDomain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . '/wp-content/themes/'; // Todo: search wp content in other paths. Example: example.com/w/wp-content/
 
     $db = new Database();
     $db->connect();
 
     foreach ($links as $link) {
-
         if (preg_match('/.*\/themes\/([^\/]*)/', $link, $matches)) {
             $themeSlug = $matches[1];
 
             if (!array_key_exists($themeSlug, $themes) && preg_match('/^[a-z\-_]+$/', $themeSlug)) {
 
-                // Calculate the root domain once
-                if (!isset($rootDomain)) {
-                    $parsedUrl = parse_url($link);
-                    $rootDomain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . '/wp-content/themes/'; // Todo: search wp content in other paths. Example: example.com/w/wp-content/
-                }
-
                 $themePath = $rootDomain . $themeSlug;
                 $themeInfo = get_theme_info($db, $themeSlug, $themePath);
 
                 if (!empty($themeInfo)) {
-                    // Overide null fields with the desired values
-                    $themeInfo['screenshot'] = $themeInfo['screenshot'] ?? "/no-theme-image.svg";
-                    $themeInfo['description'] = $themeInfo['description'] ?? "No description provided";
-                    $themeInfo['author'] = $themeInfo['author'] ?? "No author found";
-
                     $themes[$themeSlug] = $themeInfo;
                 }
             }
         }
     }
+
+    // Check the domain name as theme slug candidate
+    $host = $parsedUrl['host'];
+    if (preg_match('/(?:www\.)?(.*?)\.\w+$/', $host, $matches)) {
+        $themePath =  $rootDomain . $matches[1];
+        $themeInfo = get_theme_info($db, $matches[1], $themePath, false);
+        if (!empty($themeInfo) && !array_key_exists($matches[1], $themes)) {
+            $themes[$themeSlug] = $themeInfo;
+        }
+    };
 
     $db->close();
 
@@ -55,15 +45,16 @@ function find_themes($links, $url)
 }
 
 // Returns the theme information of a given theme slug
-function get_theme_info($db, $themeSlug, $themePath)
+function get_theme_info($db, $themeSlug, $themePath, $checkPublicDirectory = true)
 {
     $result = $db->query("SELECT * FROM themes WHERE slug = '$themeSlug'");
     $row = $result->fetch_assoc();
 
     if (empty($row)) {
 
-        $themeInfo = find_theme_info_in_directory($themeSlug);
-
+        if ($checkPublicDirectory) {
+            $themeInfo = find_theme_info_in_directory($themeSlug);
+        }
         if (empty($themeInfo)) {
             $themeInfo = find_theme_info_in_website($themeSlug, $themePath);
         }
@@ -109,6 +100,11 @@ function get_theme_info($db, $themeSlug, $themePath)
         // Update timesAnalyzed and lastAnalyzed
         $db->query("UPDATE themes SET timesAnalyzed = timesAnalyzed + 1, lastAnalyzed = NOW() WHERE slug = '$themeSlug'");    
     }
+
+    // Overide null fields with the desired values
+    $themeInfo['screenshot'] = $themeInfo['screenshot'] ?? "/no-theme-image.svg";
+    $themeInfo['description'] = $themeInfo['description'] ?? "No description provided";
+    $themeInfo['author'] = $themeInfo['author'] ?? "No author found";
 
     return $themeInfo;
 }
