@@ -87,6 +87,12 @@ function get_top_plugins($quantity, $page)
             'link' => $row['link'],
         ];
 
+        // Overide null fields with the desired values
+        $pluginInfo['banner'] = $pluginInfo['banner'] ?? "/no-plugin-banner.svg";
+        $pluginInfo['icon'] = $pluginInfo['icon'] ?? "/no-plugin-icon.svg";
+        $pluginInfo['description'] = $pluginInfo['description'] ?? "No description provided";
+        $pluginInfo['contributors'] = $pluginInfo['contributors'] ?? "No contributors found";
+
         $plugins[] = $pluginInfo;
     }
 
