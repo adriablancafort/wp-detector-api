@@ -81,8 +81,7 @@ function get_plugin_info($db, $pluginSlug, $pluginPath, $checkPublicDirectory = 
         $description = isset($pluginInfo['description']) ? "'" . $pluginInfo['description'] . "'" : "NULL";
         $link = isset($pluginInfo['link']) ? "'" . $pluginInfo['link'] . "'" : "NULL";
 
-        // Insert the plugin info into the database
-        //$db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$pluginSlug', $banner, $icon, $title, $contributors, $version, $website, $sanatizedWebsite, $lastUpdated, $activeInstallations, $reqWpVersion, $testedWpVersion, $reqPhpVersion, $description, $link, 1, NOW())");
+        $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$pluginSlug', $banner, $icon, $title, $contributors, $version, $website, $sanatizedWebsite, $lastUpdated, $activeInstallations, $reqWpVersion, $testedWpVersion, $reqPhpVersion, $description, $link, 1, NOW())");
 
     } else {
         $pluginInfo = [
@@ -285,6 +284,7 @@ function find_plugin_info_in_website($pluginPath)
     preg_match('/== Description ==\n\n(.*?)\n==/s', $readmeTxtContent, $matches); // Description until the next "=="
     $description = $matches[1] ?? null;
     $description = substr($description, 0, 1000); // Limit the description to 1000 characters
+    $description = str_replace(['"', "'"], ' ', $description); // Remove quotes
 
     $plugin = [
         'banner' => null,
