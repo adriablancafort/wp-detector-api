@@ -19,7 +19,7 @@ function get_plugins($url)
         require_once 'find_plugins.php';
         $html = get_content($url);
         $links = find_links($html);
-        $plugins = find_plugins($links);
+        $plugins = find_plugins($links, $url);
 
         write_plugin_slugs_to_database($db, $plugins, $url);
 
