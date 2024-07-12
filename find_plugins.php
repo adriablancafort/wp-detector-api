@@ -3,9 +3,12 @@
 require_once 'database_connection.php';
 
 // Returns all the plugins of the given url
-function find_plugins($links)
+function find_plugins($links, $url)
 {
     $plugins = [];
+
+    $parsedUrl = parse_url($url);
+    $rootDomain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . '/wp-content/plugins/'; // Todo: search wp content in other paths. Example: example.com/w/wp-content/
 
     $db = new Database();
     $db->connect();
@@ -14,23 +17,27 @@ function find_plugins($links)
         if (preg_match('/.*\/plugins\/([^\/]*)/', $link, $matches)) {
             $pluginSlug = $matches[1];
 
-            // Parse the URL to get the scheme and host
-            $parsedUrl = parse_url($link);
-            $rootDomain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
-            $pluginPath = $rootDomain . '/wp-content/plugins/' . $pluginSlug; // Todo: search wp content in other paths. Example: example.com/w/wp-content/
+            if (!array_key_exists($pluginSlug, $plugins) && preg_match('/^[a-z0-9\-]+$/', $pluginSlug)) {
 
-            if (!array_key_exists($pluginSlug, $plugins) && preg_match('/^[a-z\-]+$/', $pluginSlug)) {
+                $pluginPath = $rootDomain . $pluginSlug;
                 $pluginInfo = get_plugin_info($db, $pluginSlug, $pluginPath);
-                if (!empty($pluginInfo)) {
-                    // Overide null fields with the desired values
-                    $themeInfo['banner'] = $themeInfo['banner'] ?? "/no-plugin-banner.svg";
-                    $themeInfo['icon'] = $themeInfo['icon'] ?? "/no-plugin-icon.svg";
-                    $pluginInfo['description'] = $pluginInfo['description'] ?? "No description provided";
-                    $pluginInfo['contributors'] = $pluginInfo['author'] ?? "No contributors found";
 
+                if (!empty($pluginInfo)) {
                     $plugins[$pluginSlug] = $pluginInfo;
                 }
             }
+        }
+    }
+
+    // Check popular plugins only in website
+    $pluginSlugs = ['seo', 'seo-by-rank-math', 'wp-mail-smtp'];
+    foreach ($pluginSlugs as $pluginSlug) {
+
+        $pluginPath = $rootDomain . $pluginSlug;
+        $pluginInfo = get_plugin_info($db, $pluginSlug, $pluginPath, false);
+
+        if (!empty($pluginInfo) && !array_key_exists($pluginSlug, $plugins)) {
+            $plugins[$pluginSlug] = $pluginInfo;
         }
     }
 
@@ -40,13 +47,16 @@ function find_plugins($links)
 }
 
 // Returns the plugin information of a given plugin slug
-function get_plugin_info($db, $pluginSlug, $pluginPath)
+function get_plugin_info($db, $pluginSlug, $pluginPath, $checkPublicDirectory = true)
 {
     $result = $db->query("SELECT * FROM plugins WHERE slug = '$pluginSlug'");
     $row = $result->fetch_assoc();
 
     if (empty($row)) {
-        $pluginInfo = find_plugin_info_in_directory($pluginSlug);
+
+        if ($checkPublicDirectory) {
+            $pluginInfo = find_plugin_info_in_directory($pluginSlug);
+        }
         if (empty($pluginInfo)) {
             $pluginInfo = find_plugin_info_in_website($pluginSlug, $pluginPath);
         }
@@ -70,7 +80,7 @@ function get_plugin_info($db, $pluginSlug, $pluginPath)
         $link = isset($pluginInfo['link']) ? "'" . $pluginInfo['link'] . "'" : "NULL";
 
         // Insert the plugin info into the database
-        $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$pluginSlug', $banner, $icon, $title, $contributors, $version, $website, $sanatizedWebsite, $lastUpdated, $activeInstallations, $reqWpVersion, $testedWpVersion, $reqPhpVersion, $description, $link, 1, NOW())");
+        //$db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$pluginSlug', $banner, $icon, $title, $contributors, $version, $website, $sanatizedWebsite, $lastUpdated, $activeInstallations, $reqWpVersion, $testedWpVersion, $reqPhpVersion, $description, $link, 1, NOW())");
 
     } else {
         $pluginInfo = [
@@ -94,6 +104,12 @@ function get_plugin_info($db, $pluginSlug, $pluginPath)
         $db->query("UPDATE plugins SET timesAnalyzed = timesAnalyzed + 1, lastAnalyzed = NOW() WHERE slug = '$pluginSlug'");
     }
 
+    // Overide null fields with the desired values
+    $pluginInfo['banner'] = $pluginInfo['banner'] ?? "/no-plugin-banner.svg";
+    $pluginInfo['icon'] = $pluginInfo['icon'] ?? "/no-plugin-icon.svg";
+    $pluginInfo['description'] = $pluginInfo['description'] ?? "No description provided";
+    $pluginInfo['contributors'] = $pluginInfo['author'] ?? "No contributors found";
+
     return $pluginInfo;
 }
 
@@ -106,7 +122,7 @@ function find_plugin_info_in_directory($pluginSlug)
     $html = get_content($url);
 
     // Return if the page didn't return content
-    if ($html === null) {
+    if (empty($html)) {
         return null;
     }
 
@@ -214,10 +230,12 @@ function find_plugin_info_in_website($pluginSlug, $pluginPath)
     require_once 'get_content.php';
 
     $readmeTxtUrl =  $pluginPath . '/readme.txt';
+
+
     $readmeTxtContent = get_content($readmeTxtUrl);
 
     // Return if there is no readme ?
-    if ($readmeTxtContent === null) {
+    if (empty($readmeTxtContent)) {
         return null;
     }
 
@@ -225,10 +243,14 @@ function find_plugin_info_in_website($pluginSlug, $pluginPath)
     if (isset($matches[1])) {
         $title = trim($matches[1]);
     } else {
+        return null; // The title should exist
+
+        /*
         // Convert "plugin-slug" to "Plugin Slug"
         $words = explode('-', $pluginSlug);
         $words = array_map('ucfirst', $words);
         $title = implode(' ', $words);
+        */
     }
 
     preg_match('/Contributors: (.*)/', $readmeTxtContent, $matches);
