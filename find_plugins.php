@@ -32,12 +32,14 @@ function find_plugins($links, $url)
     // Check popular plugins only in website
     $pluginSlugs = ['seo', 'seo-by-rank-math', 'wp-mail-smtp'];
     foreach ($pluginSlugs as $pluginSlug) {
+        if (!array_key_exists($pluginSlug, $plugins)) {
 
-        $pluginPath = $rootDomain . $pluginSlug;
-        $pluginInfo = get_plugin_info($db, $pluginSlug, $pluginPath, false);
+            $pluginPath = $rootDomain . $pluginSlug;
+            $pluginInfo = get_plugin_info($db, $pluginSlug, $pluginPath, false);
 
-        if (!empty($pluginInfo) && !array_key_exists($pluginSlug, $plugins)) {
-            $plugins[$pluginSlug] = $pluginInfo;
+            if (!empty($pluginInfo)) {
+                $plugins[$pluginSlug] = $pluginInfo;
+            }
         }
     }
 
@@ -131,7 +133,7 @@ function find_plugin_info_in_directory($pluginSlug)
     $xpath = new DOMXPath($doc);
 
     $nodes = $xpath->query('//title');
-    $pageTitle = $nodes->item(0)->nodeValue;
+    $pageTitle = trim($nodes->item(0)->nodeValue);
 
     // Returns null if the theme page doesen't exist in worpdress directory (The title will be "Search Results ...")
     if (strpos($pageTitle, "Search Results") !== false) {
@@ -139,14 +141,14 @@ function find_plugin_info_in_directory($pluginSlug)
     }
 
     $nodes = $xpath->query('//div[@class="plugin-banner"]/img/@src');
-    $banner = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
+    $banner = $nodes->length > 0 ? trim($nodes->item(0)->nodeValue) : null;
 
     $nodes = $xpath->query('//div[@class="entry-thumbnail"]/img[@class="plugin-icon"]/@src');
-    $icon = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
+    $icon = $nodes->length > 0 ? trim($nodes->item(0)->nodeValue) : null;
 
     $nodes = $xpath->query('//h1[@class="plugin-title"]');
     if ($nodes->length > 0) {
-        $title = $nodes->item(0)->nodeValue;
+        $title = trim($nodes->item(0)->nodeValue);
     } else {
         // Format the title from the slug
         $words = explode('-', $pluginSlug);
@@ -163,22 +165,22 @@ function find_plugin_info_in_directory($pluginSlug)
     $contributors = implode(', ', $contributorsList); // Transform to comma separated string
 
     $nodes = $xpath->query('//li[contains(text(), "Version")]/strong');
-    $version = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
+    $version = $nodes->length > 0 ? trim($nodes->item(0)->nodeValue) : null;
 
     $nodes = $xpath->query('//li[contains(text(), "Last updated")]/strong/span');
-    $lastUpdated = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
+    $lastUpdated = $nodes->length > 0 ? trim($nodes->item(0)->nodeValue) : null;
 
     $nodes = $xpath->query('//li[contains(text(), "Active installations")]/strong');
-    $activeInstallations = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
+    $activeInstallations = $nodes->length > 0 ? trim($nodes->item(0)->nodeValue) : null;
 
     $nodes = $xpath->query('//li[contains(text(), "WordPress version")]/strong');
-    $reqWpVersion = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
+    $reqWpVersion = $nodes->length > 0 ? trim($nodes->item(0)->nodeValue) : null;
 
     $nodes = $xpath->query('//li[contains(text(), "Tested up to")]/strong');
-    $testedWpVersion = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
+    $testedWpVersion = $nodes->length > 0 ? trim($nodes->item(0)->nodeValue) : null;
 
     $nodes = $xpath->query('//li[contains(text(), "PHP version")]/strong');
-    $reqPhpVersion = $nodes->length > 0 ? $nodes->item(0)->nodeValue : null;
+    $reqPhpVersion = $nodes->length > 0 ? trim($nodes->item(0)->nodeValue) : null;
 
     $website = null;
     $sanatizedWebsite = null;
@@ -187,7 +189,7 @@ function find_plugin_info_in_directory($pluginSlug)
 
     // If a website is found, sanatize it
     if ($nodes->length > 0) {
-        $websiteUrl = $nodes->item(0)->nodeValue;
+        $websiteUrl = trim($nodes->item(0)->nodeValue);
         $parsedUrl = parse_url($websiteUrl);
         $sanatizedWebsite = $parsedUrl['host'] ?? null;
         $website = $sanatizedWebsite ? $parsedUrl['scheme'] . '://' . $sanatizedWebsite : null;
