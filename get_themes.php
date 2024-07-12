@@ -86,7 +86,7 @@ function get_top_themes($quantity, $page)
         ];
 
         // Overide null fields with the desired values
-        $themeInfo['screenshot'] = $themeInfo['screenshot'] ?? "/no-theme-image.svg";
+        $themeInfo['screenshot'] = $themeInfo['screenshot'] ?? "/no-theme-screenshot.svg";
         $themeInfo['description'] = $themeInfo['description'] ?? "No description provided";
         $themeInfo['author'] = $themeInfo['author'] ?? "No author found";
 

@@ -106,7 +106,7 @@ function get_theme_info($db, $themeSlug, $themePath, $checkPublicDirectory = tru
     }
 
     // Overide null fields with the desired values
-    $themeInfo['screenshot'] = $themeInfo['screenshot'] ?? "/no-theme-image.svg";
+    $themeInfo['screenshot'] = $themeInfo['screenshot'] ?? "/no-theme-screenshot.svg";
     $themeInfo['description'] = $themeInfo['description'] ?? "No description provided";
     $themeInfo['author'] = $themeInfo['author'] ?? "No author found";
 
