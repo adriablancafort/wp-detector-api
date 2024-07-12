@@ -82,7 +82,7 @@ function get_plugin_info($db, $pluginSlug, $pluginPath, $checkPublicDirectory = 
         $link = isset($pluginInfo['link']) ? "'" . $pluginInfo['link'] . "'" : "NULL";
 
         // Insert the plugin info into the database
-        //$db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$pluginSlug', $banner, $icon, $title, $contributors, $version, $website, $sanatizedWebsite, $lastUpdated, $activeInstallations, $reqWpVersion, $testedWpVersion, $reqPhpVersion, $description, $link, 1, NOW())");
+        $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$pluginSlug', $banner, $icon, $title, $contributors, $version, $website, $sanatizedWebsite, $lastUpdated, $activeInstallations, $reqWpVersion, $testedWpVersion, $reqPhpVersion, $description, $link, 1, NOW())");
 
     } else {
         $pluginInfo = [
