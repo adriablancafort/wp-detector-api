@@ -184,7 +184,7 @@ function find_theme_info_in_directory($themeSlug)
 
     $nodes = $xpath->query('//div[contains(@class, "entry-content") and contains(@class, "wp-block-post-content")]//p');
     $description = $nodes->length > 0 ? trim($nodes->item(0)->nodeValue) : null;
-    $description = substr($description, 0, 800); // Limit the description to 800 characters
+    $description = substr($description, 0, 1000); // Limit the description to 1000 characters
 
     $theme = [
         'screenshot' => $screenshot,
@@ -259,7 +259,7 @@ function find_theme_info_in_website($themeSlug, $themePath)
 
     preg_match('/Description: (.*)/', $styleCssContent, $matches);
     $description = isset($matches[1]) ? trim($matches[1]) : null;
-    $description = substr($description, 0, 800); // Limit the description to 800 characters
+    $description = substr($description, 0, 1000); // Limit the description to 1000 characters
 
     $screenshot = get_theme_screenshot_in_website($themePath);
 

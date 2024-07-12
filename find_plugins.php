@@ -203,7 +203,7 @@ function find_plugin_info_in_directory($pluginSlug)
             $description .= trim($node->nodeValue) . ' ';
         }
         $description = trim($description); // Remove any leading/trailing whitespace
-        $description = substr($description, 0, 800); // Limit the description to 800 characters
+        $description = substr($description, 0, 1000); // Limit the description to 1000 characters
     }
 
     $plugin = [
@@ -286,7 +286,7 @@ function find_plugin_info_in_website($pluginSlug, $pluginPath)
 
     preg_match('/== Description ==\n\n(.*?)\n==/s', $readmeTxtContent, $matches); // Description until the next "=="
     $description = $matches[1] ?? null;
-    $description = substr($description, 0, 800); // Limit the description to 800 characters
+    $description = substr($description, 0, 1000); // Limit the description to 1000 characters
 
     $plugin = [
         'banner' => null,
