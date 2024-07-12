@@ -6,6 +6,7 @@ require_once 'set_header.php';
 require_once 'get_wp.php';
 require_once 'get_themes.php';
 require_once 'get_plugins.php';
+require_once 'get_websites.php';
 
 $type = $_GET['type'];
 
@@ -35,5 +36,15 @@ if ($type === 'wp') {
     $page = $_GET['page'];
     $plugins = get_top_plugins($quantity, $page);
     echo json_encode(['plugins' => $plugins]);
+}
+
+elseif ($type === 'websites-themes') {
+    $websitesThemes = get_websites_themes();
+    echo json_encode(['websitesThemes' => $websitesThemes]);
+}
+
+elseif ($type === 'websites-plugins') {
+    $websitesPlugins = get_websites_plugins();
+    echo json_encode(['websitesPlugins' => $websitesPlugins]);
 }
 ?>
