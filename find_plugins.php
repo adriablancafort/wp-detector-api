@@ -30,7 +30,7 @@ function find_plugins($links, $url)
     }
 
     // Check popular plugins only in website
-    $pluginSlugs = ['seo', 'seo-by-rank-math', 'wp-mail-smtp'];
+    $pluginSlugs = ['wordpress-seo', 'seo-by-rank-math', 'wp-mail-smtp'];
     foreach ($pluginSlugs as $pluginSlug) {
         if (!array_key_exists($pluginSlug, $plugins)) {
 
