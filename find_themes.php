@@ -35,10 +35,14 @@ function find_themes($links, $url)
         if (!array_key_exists($matches[1], $themes)) {
 
             $themePath =  $rootDomain . $matches[1];
-            $themeInfo = get_theme_info($db, $matches[1], $themePath, false);
-            
-            if (!empty($themeInfo)) {
-                $themes[$themeSlug] = $themeInfo;
+
+            // Check if the plugin exists in the website
+            if (find_theme_info_in_website($themePath, true)) {
+                $themeInfo = get_theme_info($db, $matches[1], $themePath);
+
+                if (!empty($themeInfo)) {
+                    $themes[$themeSlug] = $themeInfo;
+                }
             }
         }
     };
@@ -49,18 +53,16 @@ function find_themes($links, $url)
 }
 
 // Returns the theme information of a given theme slug
-function get_theme_info($db, $themeSlug, $themePath, $checkPublicDirectory = true)
+function get_theme_info($db, $themeSlug, $themePath)
 {
     $result = $db->query("SELECT * FROM themes WHERE slug = '$themeSlug'");
     $row = $result->fetch_assoc();
 
     if (empty($row)) {
 
-        if ($checkPublicDirectory) {
-            $themeInfo = find_theme_info_in_directory($themeSlug);
-        }
+        $themeInfo = find_theme_info_in_directory($themeSlug);
         if (empty($themeInfo)) {
-            $themeInfo = find_theme_info_in_website($themeSlug, $themePath);
+            $themeInfo = find_theme_info_in_website($themePath);
         }
         if (empty($themeInfo)) {
             return null; // False positive
@@ -80,10 +82,9 @@ function get_theme_info($db, $themeSlug, $themePath, $checkPublicDirectory = tru
         $reqPhpVersion = isset($themeInfo['reqPhpVersion']) ? "'" . $themeInfo['reqPhpVersion'] . "'" : "NULL";
         $description = isset($themeInfo['description']) ? "'" . $themeInfo['description'] . "'" : "NULL";
         $link = isset($themeInfo['link']) ? "'" . $themeInfo['link'] . "'" : "NULL";
- 
+
         // Insert the theme info into the database
         $db->query("INSERT INTO themes (slug, screenshot, title, author, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$themeSlug', $screenshot, $title, $author, $version, $website, $sanatizedWebsite, $lastUpdated, $activeInstallations, $reqWpVersion, $testedWpVersion, $reqPhpVersion, $description, $link, 1, NOW())");
-
     } else {
         $themeInfo = [
             'screenshot' => $row['screenshot'],
@@ -102,7 +103,7 @@ function get_theme_info($db, $themeSlug, $themePath, $checkPublicDirectory = tru
         ];
 
         // Update timesAnalyzed and lastAnalyzed
-        $db->query("UPDATE themes SET timesAnalyzed = timesAnalyzed + 1, lastAnalyzed = NOW() WHERE slug = '$themeSlug'");    
+        $db->query("UPDATE themes SET timesAnalyzed = timesAnalyzed + 1, lastAnalyzed = NOW() WHERE slug = '$themeSlug'");
     }
 
     // Overide null fields with the desired values
@@ -139,7 +140,7 @@ function find_theme_info_in_directory($themeSlug)
     }
 
     $nodes = $xpath->query('//figure[@class="wp-block-post-featured-image"]/img');
-    $screenshot = $nodes->length > 0 ? $nodes->item(0)->getAttribute('src') : null; 
+    $screenshot = $nodes->length > 0 ? $nodes->item(0)->getAttribute('src') : null;
 
     $nodes = $xpath->query('//h1');
     if ($nodes->length > 0) {
@@ -206,7 +207,7 @@ function find_theme_info_in_directory($themeSlug)
 }
 
 // Returns the theme information in the website given a theme path
-function find_theme_info_in_website($themeSlug, $themePath)
+function find_theme_info_in_website($themePath, $returnBool = false)
 {
     require_once 'get_content.php';
 
@@ -220,16 +221,13 @@ function find_theme_info_in_website($themeSlug, $themePath)
 
     preg_match('/Theme Name: (.*)/', $styleCssContent, $matches);
     if (isset($matches[1])) {
+        // Theme found in website
+        if ($returnBool) {
+            return true;
+        }
         $title = trim($matches[1]);
     } else {
         return null; // The title should exist
-
-        /*
-        // Convert "plugin-slug" to "Plugin Slug"
-        $words = explode('-', $themeSlug);
-        $words = array_map('ucfirst', $words);
-        $title = implode(' ', $words);
-        */
     }
 
     preg_match('/Theme URI: (.*)/', $styleCssContent, $matches);
@@ -304,4 +302,3 @@ function get_theme_screenshot_in_website($themePath)
 
     return null;
 }
-?>

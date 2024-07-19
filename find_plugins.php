@@ -35,10 +35,14 @@ function find_plugins($links, $url)
         if (!array_key_exists($pluginSlug, $plugins)) {
 
             $pluginPath = $rootDomain . $pluginSlug;
-            $pluginInfo = get_plugin_info($db, $pluginSlug, $pluginPath, false);
 
-            if (!empty($pluginInfo)) {
-                $plugins[$pluginSlug] = $pluginInfo;
+            // Check if the plugin exists in the website
+            if (find_plugin_info_in_website($pluginPath, true)) {
+                $pluginInfo = get_plugin_info($db, $pluginSlug, $pluginPath);
+
+                if (!empty($pluginInfo)) {
+                    $plugins[$pluginSlug] = $pluginInfo;
+                }
             }
         }
     }
@@ -49,16 +53,14 @@ function find_plugins($links, $url)
 }
 
 // Returns the plugin information of a given plugin slug
-function get_plugin_info($db, $pluginSlug, $pluginPath, $checkPublicDirectory = true)
+function get_plugin_info($db, $pluginSlug, $pluginPath)
 {
     $result = $db->query("SELECT * FROM plugins WHERE slug = '$pluginSlug'");
     $row = $result->fetch_assoc();
 
     if (empty($row)) {
 
-        if ($checkPublicDirectory) {
-            $pluginInfo = find_plugin_info_in_directory($pluginSlug);
-        }
+        $pluginInfo = find_plugin_info_in_directory($pluginSlug);
         if (empty($pluginInfo)) {
             $pluginInfo = find_plugin_info_in_website($pluginPath);
         }
@@ -81,8 +83,8 @@ function get_plugin_info($db, $pluginSlug, $pluginPath, $checkPublicDirectory = 
         $description = isset($pluginInfo['description']) ? "'" . $pluginInfo['description'] . "'" : "NULL";
         $link = isset($pluginInfo['link']) ? "'" . $pluginInfo['link'] . "'" : "NULL";
 
+        // Insert the plugin info into the database
         $db->query("INSERT INTO plugins (slug, banner, icon, title, contributors, version, website, sanatizedWebsite, lastUpdated, activeInstallations, reqWpVersion, testedWpVersion, reqPhpVersion, description, link, timesAnalyzed, lastAnalyzed) VALUES ('$pluginSlug', $banner, $icon, $title, $contributors, $version, $website, $sanatizedWebsite, $lastUpdated, $activeInstallations, $reqWpVersion, $testedWpVersion, $reqPhpVersion, $description, $link, 1, NOW())");
-
     } else {
         $pluginInfo = [
             'banner' => $row['banner'],
@@ -226,7 +228,7 @@ function find_plugin_info_in_directory($pluginSlug)
 }
 
 // Returns the plugin information given a plugin path
-function find_plugin_info_in_website($pluginPath)
+function find_plugin_info_in_website($pluginPath, $returnBool = false)
 {
     require_once 'get_content.php';
 
@@ -240,16 +242,13 @@ function find_plugin_info_in_website($pluginPath)
 
     preg_match('/=== (.*) ===/', $readmeTxtContent, $matches);
     if (isset($matches[1])) {
+        // Plugin found in website
+        if ($returnBool) {
+            return true;
+        }
         $title = trim($matches[1]);
     } else {
         return null; // The title should exist
-
-        /*
-        // Convert "plugin-slug" to "Plugin Slug"
-        $words = explode('-', $pluginSlug);
-        $words = array_map('ucfirst', $words);
-        $title = implode(' ', $words);
-        */
     }
 
     preg_match('/Contributors: (.*)/', $readmeTxtContent, $matches);
