@@ -60,7 +60,7 @@ function get_theme_info($db, $themeSlug, $themePath)
 
     if (empty($row)) {
 
-        $themeInfo = find_theme_info_in_directory($themeSlug);
+        $themeInfo = find_theme_info_in_api($themeSlug);
         if (empty($themeInfo)) {
             $themeInfo = find_theme_info_in_website($themePath);
         }
@@ -112,6 +112,40 @@ function get_theme_info($db, $themeSlug, $themePath)
     $themeInfo['author'] = $themeInfo['author'] ?? "No author found";
 
     return $themeInfo;
+}
+
+// Returns the plugin information in the wordpress directory given a plugin slug
+function find_theme_info_in_api($themeSlug)
+{
+    $url = "https://api.wordpress.org/themes/info/1.2/?action=theme_information&request[slug]=" . $themeSlug;
+
+    $json = file_get_contents($url);
+
+    // Decode the JSON response into an associative array
+    $data = json_decode($json, true);
+
+    // Return if the theme is not available in the wordpress directory
+    if (isset($data['error'])) {
+        return null;
+    }
+
+    $theme = [
+        'screenshot' => $data['screenshot_url'] ?? '',
+        'title' => $data['name'] ?? '',
+        'author' => $data['author']['display_name'] ?? '',
+        'version' => $data['version'] ?? '',
+        'website' => $data['homepage'] ?? '',
+        'sanatizedWebsite' => filter_var($data['homepage'] ?? '', FILTER_SANITIZE_URL),
+        'lastUpdated' => $data['last_updated'] ?? '',
+        'activeInstallations' => $data['downloaded'] ?? 0, // Assuming 'downloaded' represents active installations
+        'reqWpVersion' => $data['requires'] ?? '',
+        'testedWpVersion' => $data['tested'] ?? '', // Assuming there's a 'tested' field or similar
+        'reqPhpVersion' => $data['requires_php'] ?? '',
+        'description' => $data['sections']['description'] ?? '',
+        'link' => $data['download_link'] ?? '',
+    ];
+
+    return $theme;
 }
 
 // Returns the theme information in the wordpress directory given a theme slug

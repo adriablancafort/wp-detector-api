@@ -60,7 +60,7 @@ function get_plugin_info($db, $pluginSlug, $pluginPath)
 
     if (empty($row)) {
 
-        $pluginInfo = find_plugin_info_in_directory($pluginSlug);
+        $pluginInfo = find_plugin_info_in_api($pluginSlug);
         if (empty($pluginInfo)) {
             $pluginInfo = find_plugin_info_in_website($pluginPath);
         }
@@ -114,6 +114,41 @@ function get_plugin_info($db, $pluginSlug, $pluginPath)
     $pluginInfo['contributors'] = $pluginInfo['contributors'] ?? "No contributors found";
 
     return $pluginInfo;
+}
+
+// Returns the plugin information in the wordpress directory given a plugin slug
+function find_plugin_info_in_api($pluginSlug)
+{
+    $url = "https://api.wordpress.org/plugins/info/1.2/?action=plugin_information&request[slug]=" . $pluginSlug;
+
+    $json = file_get_contents($url);
+
+    // Decode the JSON response into an associative array
+    $data = json_decode($json, true);
+
+    // Return if the plugin is not available in the wordpress directory
+    if (isset($data['error'])) {
+        return null;
+    }
+
+    $plugin = [
+        'banner' => $data['banners']['low'] ?? '',
+        'icon' => '', // Assuming icon URL needs to be derived or is not available directly
+        'title' => $data['name'] ?? null,
+        'contributors' => $data['contributors'] ?? [],
+        'version' => $data['version'] ?? null,
+        'website' => $data['homepage'] ?? null,
+        'sanatizedWebsite' => filter_var($data['homepage'] ?? null, FILTER_SANITIZE_URL),
+        'lastUpdated' => $data['last_updated'] ?? null,
+        'activeInstallations' => $data['active_installs'] ?? 0,
+        'reqWpVersion' => $data['requires'] ?? null,
+        'testedWpVersion' => $data['tested'] ?? null,
+        'reqPhpVersion' => $data['requires_php'] ?? null,
+        'description' => $data['sections']['description'] ?? null,
+        'link' => $data['support_url'] ?? null,
+    ];
+
+    return $plugin;
 }
 
 // Returns the plugin information in the wordpress directory given a plugin slug
