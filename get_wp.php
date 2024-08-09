@@ -13,12 +13,17 @@ function get_wp($url)
     $row = $result->fetch_assoc();
 
     if (empty($row)) {
-        require_once 'get_content.php';
-        require_once 'find_links.php';
-        require_once 'find_wp.php';
-        $html = get_content($url);
-        $links = find_links($html);
-        $wp = find_wp($links, $url);
+        if (strpos($url, 'http') === false) {
+            // Avoid requesting chrome://, file://, etc.
+            $wp = false;
+        } else {
+            require_once 'get_content.php';
+            require_once 'find_links.php';
+            require_once 'find_wp.php';
+            $html = get_content($url);
+            $links = find_links($html);
+            $wp = find_wp($links, $url);
+        }
 
         // Write the result in the column wp in the table websites for the website $url
         $wpbool = $wp ? '1' : '0';
