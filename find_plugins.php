@@ -60,7 +60,7 @@ function get_plugin_info($db, $pluginSlug, $pluginPath)
 
     if (empty($row)) {
 
-        $pluginInfo = find_plugin_info_in_api($pluginSlug);
+        $pluginInfo = find_plugin_info_in_directory($pluginSlug);
         if (empty($pluginInfo)) {
             $pluginInfo = find_plugin_info_in_website($pluginPath);
         }

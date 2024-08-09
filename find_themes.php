@@ -60,7 +60,7 @@ function get_theme_info($db, $themeSlug, $themePath)
 
     if (empty($row)) {
 
-        $themeInfo = find_theme_info_in_api($themeSlug);
+        $themeInfo = find_theme_info_in_directory($themeSlug);
         if (empty($themeInfo)) {
             $themeInfo = find_theme_info_in_website($themePath);
         }
@@ -129,19 +129,22 @@ function find_theme_info_in_api($themeSlug)
         return null;
     }
 
+    $fullDescription = $data['sections']['description'] ?? '';
+    $description = substr($fullDescription, 0, 1000);
+
     $theme = [
         'screenshot' => $data['screenshot_url'] ?? '',
         'title' => $data['name'] ?? '',
-        'author' => $data['author']['display_name'] ?? '',
+        'author' => $data['author']['author'] ?? '',
         'version' => $data['version'] ?? '',
         'website' => $data['homepage'] ?? '',
         'sanatizedWebsite' => filter_var($data['homepage'] ?? '', FILTER_SANITIZE_URL),
         'lastUpdated' => $data['last_updated'] ?? '',
-        'activeInstallations' => $data['downloaded'] ?? 0, // Assuming 'downloaded' represents active installations
+        'activeInstallations' => $data['downloaded'] ?? 0,
         'reqWpVersion' => $data['requires'] ?? '',
-        'testedWpVersion' => $data['tested'] ?? '', // Assuming there's a 'tested' field or similar
+        'testedWpVersion' => $data['tested'] ?? '',
         'reqPhpVersion' => $data['requires_php'] ?? '',
-        'description' => $data['sections']['description'] ?? '',
+        'description' => $description,
         'link' => $data['download_link'] ?? '',
     ];
 
